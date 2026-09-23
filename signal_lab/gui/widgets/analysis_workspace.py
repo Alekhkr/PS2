@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QFrame,
@@ -13,6 +14,7 @@ from PySide6.QtWidgets import (
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
@@ -24,6 +26,7 @@ from signal_lab.gui.plots.spectrum_plot import SpectrumPlotWidget
 from signal_lab.gui.plots.waterfall_plot import WaterfallPlotWidget
 from signal_lab.gui.plots.waveform_plot import WaveformPlotWidget
 from signal_lab.gui.theme import ScientificPalette, get_monospace_font, get_ui_font
+from signal_lab.gui.widgets.bitstream_viewer import BitstreamViewer
 
 
 class AnalysisWorkspaceWidget(QWidget):
@@ -153,15 +156,39 @@ class AnalysisWorkspaceWidget(QWidget):
             f"background-color: {ScientificPalette.BG_SURFACE}; border-radius: 4px;"
         )
         layout = QVBoxLayout(container)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(8)
+        layout.setContentsMargins(6, 6, 6, 6)
+        layout.setSpacing(6)
 
-        title = QLabel("SIGNAL INSPECTOR & EVIDENCE")
-        title.setFont(get_ui_font(9, get_ui_font().weight().Bold))
-        title.setStyleSheet(f"color: {ScientificPalette.ACCENT_CYAN}; letter-spacing: 1px;")
-        layout.addWidget(title)
+        # Tabs for Evidence vs Bitstream
+        self.inspector_tabs = QTabWidget()
+        self.inspector_tabs.setStyleSheet(
+            f"""
+            QTabWidget::pane {{
+                border: 1px solid {ScientificPalette.BORDER_SUBTLE};
+                background: {ScientificPalette.BG_BASE};
+            }}
+            QTabBar::tab {{
+                background: {ScientificPalette.BG_SURFACE};
+                color: {ScientificPalette.TEXT_SECONDARY};
+                padding: 6px 12px;
+                font-family: 'Inter', sans-serif;
+                font-weight: bold;
+                font-size: 11px;
+            }}
+            QTabBar::tab:selected {{
+                background: {ScientificPalette.BG_CARD};
+                color: {ScientificPalette.ACCENT_CYAN};
+                border-bottom: 2px solid {ScientificPalette.ACCENT_CYAN};
+            }}
+            """
+        )
 
-        # Top Candidate Readout
+        # Tab 1: Modulation & Evidence
+        tab_evidence = QWidget()
+        ev_layout = QVBoxLayout(tab_evidence)
+        ev_layout.setContentsMargins(8, 8, 8, 8)
+        ev_layout.setSpacing(8)
+
         self.candidate_box = QFrame()
         self.candidate_box.setStyleSheet(
             f"background-color: {ScientificPalette.BG_CARD}; border: 1px solid {ScientificPalette.BORDER_SUBTLE}; border-radius: 4px; padding: 6px;"
@@ -186,9 +213,39 @@ class AnalysisWorkspaceWidget(QWidget):
         self.evidence_list.setWordWrap(True)
         cand_layout.addWidget(self.evidence_list)
 
-        layout.addWidget(self.candidate_box)
-        layout.addStretch()
+        ev_layout.addWidget(self.candidate_box)
+        ev_layout.addStretch()
+
+        self.inspector_tabs.addTab(tab_evidence, "Modulation & Evidence")
+
+        # Tab 2: Bitstream & Frames
+        self.bitstream_viewer = BitstreamViewer(self)
+        self.bitstream_viewer.time_navigated.connect(self._on_bitstream_time_navigated)
+        self.inspector_tabs.addTab(self.bitstream_viewer, "Bitstream & Frames")
+
+        layout.addWidget(self.inspector_tabs)
         return container
+
+    def _on_bitstream_time_navigated(self, timestamp_s: float) -> None:
+        """Center the waterfall time selection on the clicked bit's physical timestamp."""
+        if not self._full_buffer or not self._full_buffer.sample_rate_hz:
+            return
+        span_s = 0.005  # 5 ms window
+        start_s = max(0.0, timestamp_s - span_s / 2)
+        end_s = start_s + span_s
+        self.waterfall_plot.set_region(start_s, end_s)
+
+    def set_demodulated_bits(
+        self,
+        bits: np.ndarray,
+        sps: int = 4,
+        bits_per_symbol: int = 2,
+    ) -> None:
+        """Forward demodulated bits to the bitstream inspector."""
+        fs = self._full_buffer.sample_rate_hz if self._full_buffer and self._full_buffer.sample_rate_hz else 1.0
+        self.bitstream_viewer.set_bitstream(
+            bits, sample_rate_hz=fs, sps=sps, bits_per_symbol=bits_per_symbol
+        )
 
     def set_signal_buffer(self, buffer: SignalBuffer) -> None:
         """Load a full signal capture into all synchronized instruments."""

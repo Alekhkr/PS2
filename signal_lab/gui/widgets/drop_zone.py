@@ -177,7 +177,7 @@ class DropZoneWidget(QWidget):
             self,
             "Open Signal Capture",
             "",
-            "Signal Files (*.wav *.iq *.bin *.raw *.dat);;All Files (*.*)",
+            "Signal Files (*.wav *.wave *.iq *.bin *.raw *.dat *.sigmf-meta *.sigmf-data *.sigmf);;All Files (*.*)",
         )
         if filepath:
             self.file_selected.emit(filepath)

@@ -1,0 +1,258 @@
+WHAT THE PROBLEM STATEMENT EXPECTS US TO BUILD
+
+1. CORE OBJECTIVE
+- Build an automated system for analysing terrestrial RF signals captured from the air.
+- Accept .IQ and .WAV recordings as input.
+- Reduce manual signal analysis.
+- Automatically extract useful signal parameters.
+- Improve signal visibility and analysis when recording metadata is incomplete.
+- Support signals in HF, VHF and UHF bands.
+- Provide the functionality through a GUI.
+
+2. INPUT HANDLING
+- Accept .IQ files.
+- Accept .WAV files.
+- Handle the fact that IQ and WAV store signal information differently.
+- Read whatever metadata is available.
+- Handle missing metadata, especially unknown sampling rate.
+- Convert different input formats into a common internal signal representation.
+
+3. SIGNAL VISUALIZATION
+The GUI should provide useful signal-analysis views, including:
+- Time-domain waveform
+- Frequency spectrum / FFT / PSD
+- Waterfall / spectrogram
+- Constellation diagram
+- Occupied bandwidth
+- Carrier/frequency information where estimable
+- SNR / signal-quality information where feasible
+- Signal detection / segmented regions
+- Additional useful spectral/statistical features where feasible
+
+4. AUTOMATIC SIGNAL PARAMETER EXTRACTION
+The system should attempt to identify:
+- Sampling frequency / sampling rate
+- Modulation type
+- FEC type
+- Interleaving type
+
+Additional useful parameters may include:
+- Carrier frequency
+- Frequency offset
+- Symbol rate
+- Bandwidth
+- SNR
+- Timing information
+- Phase/frequency offset
+- Signal duration
+- Burst/frame boundaries
+- Other waveform characteristics
+
+IMPORTANT:
+- Distinguish metadata-derived values from waveform-inferred values.
+- Report confidence/evidence instead of only a hard prediction where possible.
+
+5. MODULATION DEMODULATION
+The system should support demodulation of:
+- FSK
+- PSK
+- QAM
+
+The demodulation pipeline should support, as required:
+- Filtering
+- Frequency correction
+- Carrier recovery
+- Timing recovery
+- Symbol synchronization
+- Symbol decisions
+- Bit recovery
+
+6. DE-INTERLEAVING
+The system should support analysis/de-interleaving for:
+- Block interleaving
+- Convolutional interleaving
+- Diagonal interleaving
+- Pseudo-random interleaving
+
+The system should be able to:
+- Generate candidate interleaver configurations.
+- Reverse candidate permutations.
+- Test candidate results.
+- Validate candidates using downstream decoding or structural consistency.
+
+7. FEC / ERROR CORRECTION
+The system should support:
+- Short-constrained convolutional codes with Viterbi decoding
+- Reed-Solomon block codes
+- Concatenated codes
+- LDPC
+
+The system should:
+- Generate/identify likely FEC candidates.
+- Try decoder configurations.
+- Validate decoding results.
+- Produce corrected/decoded bitstreams where successful.
+
+8. BITSTREAM CORRELATION
+After demodulation/decoding, the system should:
+- Generate a bitstream.
+- Display it.
+- Search for repeated patterns.
+- Perform bitstream correlation.
+- Detect possible synchronization/header patterns.
+- Detect possible frame boundaries.
+- Highlight possible header and payload regions.
+- Support correlation between extracted bitstreams where useful.
+
+9. AUTOMATED END-TO-END PIPELINE
+Expected processing flow:
+
+Input .IQ / .WAV
+    ->
+Parse metadata
+    ->
+Normalize / convert representation
+    ->
+Signal detection / segmentation
+    ->
+Spectral + time-frequency analysis
+    ->
+Feature extraction
+    ->
+Parameter estimation
+    ->
+Modulation identification
+    ->
+Synchronization
+    ->
+Demodulation
+    ->
+Bitstream generation
+    ->
+Interleaver hypothesis / de-interleaving
+    ->
+FEC identification / decoding
+    ->
+Bitstream correlation
+    ->
+Header / payload identification
+    ->
+Results + confidence + visualizations
+
+10. TECHNOLOGY / ADVANCED PROCESSING
+The problem statement specifically points toward:
+- GNU Radio
+- Python
+- C++
+
+Advanced ML/deep learning can be used for:
+- Modulation classification
+- Feature extraction
+- Parameter inference
+- Pattern recognition
+- Candidate ranking
+
+Do not make the entire system dependent on ML; use deterministic DSP where it is more reliable and explainable.
+
+11. DATA / TRAINING
+The solution should make use of training/analysis data containing:
+- .IQ
+- .WAV
+
+Use waveform and spectral relationships to improve parameter extraction.
+
+A strong implementation should combine:
+- Synthetic/labeled signals for controlled training/testing
+- Real recorded signals for robustness testing
+- Known ground-truth configurations for validating FEC/interleaver modules
+
+12. GUI EXPECTATIONS
+The application should allow a user to:
+- Load a .IQ or .WAV file.
+- Inspect signal visualizations.
+- Start automated analysis.
+- See detected/estimated parameters.
+- Inspect modulation results.
+- View spectrum, waterfall and constellation.
+- Run demodulation.
+- Run de-interleaving.
+- Run FEC decoding.
+- Inspect bitstreams.
+- Perform correlation.
+- See confidence/evidence.
+- Export results.
+
+13. EXPECTED OUTPUT
+For each analysed signal, ideally produce:
+- Input file information
+- Metadata
+- Detected signal regions
+- Sampling-rate estimate
+- Modulation candidates
+- Bandwidth
+- Carrier/frequency information where possible
+- SNR / signal quality where possible
+- Symbol-rate estimate where possible
+- Demodulated data
+- Interleaver candidates
+- FEC candidates
+- Decoded/corrected bitstream
+- Correlation results
+- Possible header/payload boundaries
+- Visual plots
+- Confidence/evidence for important conclusions
+
+14. MAIN VALUE OF THE PROJECT
+The project is NOT only a spectrum/waterfall viewer.
+
+The core automated chain is:
+
+RAW IQ/WAV
+-> signal characterization
+-> parameter extraction
+-> modulation identification
+-> demodulation
+-> de-interleaving
+-> FEC decoding
+-> bitstream correlation
+-> structured analysis output
+
+15. PRACTICAL LIMITATION
+- Some parameters cannot always be uniquely recovered from waveform samples alone.
+- Missing metadata, low SNR, short recordings, distortion and unknown acquisition settings can make parameters ambiguous.
+- Therefore report:
+  - Estimated value
+  - Confidence
+  - Supporting evidence
+  - Alternative hypotheses where relevant
+- Do not present uncertain inference as guaranteed truth.
+
+16. GOOD MVP
+The minimum useful prototype should demonstrate:
+- .IQ ingestion
+- .WAV ingestion
+- Common signal representation
+- Spectrum
+- Waterfall
+- Constellation
+- Signal detection
+- Sampling-rate / metadata handling
+- Bandwidth estimation
+- SNR estimation
+- FSK/PSK/QAM classification
+- Basic demodulation
+- Bitstream extraction
+- Basic bitstream correlation
+- Results panel with confidence
+
+Then add:
+- Block/convolutional/diagonal/pseudo-random de-interleaving
+- Viterbi
+- Reed-Solomon
+- Concatenated FEC
+- LDPC
+- More advanced ML parameter inference
+- Automated hypothesis testing and validation
+
+17. ONE-LINE SUMMARY
+Build a GUI-based automated RF signal-analysis system that accepts .IQ/.WAV recordings, extracts signal parameters, visualizes signal characteristics, identifies and demodulates modulation, performs de-interleaving and FEC decoding, and correlates the resulting bitstream to identify useful structure such as headers and payloads.

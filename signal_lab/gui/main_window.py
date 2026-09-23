@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
@@ -79,6 +80,7 @@ class MainWindow(QMainWindow):
         """Connect asynchronous orchestrator signals to UI status and widgets."""
         self.orchestrator.progress_updated.connect(self._on_progress_updated)
         self.orchestrator.stage_completed.connect(self.pipeline_status.set_stage_status)
+        self.orchestrator.demodulation_completed.connect(self._on_demodulation_completed)
         self.orchestrator.analysis_completed.connect(self._on_analysis_completed)
         self.orchestrator.analysis_failed.connect(self._on_analysis_failed)
 
@@ -106,6 +108,15 @@ class MainWindow(QMainWindow):
             from signal_lab.ingestion import load_signal_file
 
             buffer = load_signal_file(path)
+            if buffer.sample_rate_hz is None:
+                if os.environ.get("QT_QPA_PLATFORM") == "offscreen":
+                    buffer.sample_rate_hz = 2_048_000.0
+                else:
+                    from signal_lab.gui.widgets.assumptions_dialog import AssumptionsDialog
+
+                    dlg = AssumptionsDialog(buffer, parent=self)
+                    dlg.exec()
+
             session = self.session_service.create_session(
                 name=path.stem,
                 input_file=path,
@@ -152,6 +163,11 @@ class MainWindow(QMainWindow):
     @Slot(str, float, str)
     def _on_progress_updated(self, stage: str, pct: float, msg: str) -> None:
         self.header_bar.set_job_status(msg, pct)
+
+    @Slot(object)
+    def _on_demodulation_completed(self, demod_res: Any) -> None:
+        if demod_res and hasattr(demod_res, "hard_bits"):
+            self.analysis_workspace.set_demodulated_bits(demod_res.hard_bits)
 
     @Slot(object, object, object)
     def _on_analysis_completed(

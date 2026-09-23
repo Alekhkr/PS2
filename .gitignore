@@ -36,3 +36,4 @@ htmlcov/
 *.db
 *.sqlite3
 workspace/
+data/

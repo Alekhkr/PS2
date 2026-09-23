@@ -5,6 +5,8 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 
+import numpy as np
+
 from signal_lab.domain.enums import EvidenceSource, ValidationStatus
 
 
@@ -74,4 +76,17 @@ class FECCandidate:
     syndrome_score: float = 0.0
     corrections_count: int = 0
     status: ValidationStatus | str = ValidationStatus.UNVERIFIED
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+
+@dataclass
+class DecodingResult:
+    """Standard container for FEC decoding evaluation results."""
+
+    fec_type: object
+    corrected_bits: np.ndarray
+    bit_error_rate_estimate: float = 0.0
+    confidence: float = 0.0
+    validation: ValidationStatus | str = ValidationStatus.UNVERIFIED
+    notes: str = ""
     id: str = field(default_factory=lambda: str(uuid.uuid4()))

@@ -93,6 +93,11 @@ class WaterfallPlotWidget(pg.PlotWidget):
         start_t, end_t = self.region.getRegion()
         self.region_selected.emit(start_t, end_t)
 
+    def set_region(self, start_t: float, end_t: float) -> None:
+        """Programmatically move region selector and trigger updates."""
+        self.region.setRegion([start_t, end_t])
+        self._on_region_changed()
+
     def clear_waterfall(self) -> None:
         self.img_item.clear()
         self.region.setVisible(False)

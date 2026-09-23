@@ -1,0 +1,1341 @@
+CURRENT AVAILABLE SOLUTIONS VS. THE PROPOSED SYSTEM
+========================================================
+
+Purpose
+-------
+This document compares major currently available SDR/RF signal-analysis solutions against the requirements of the problem statement:
+
+- Input .IQ and .WAV recordings
+- Signal visualization
+- Automatic parameter extraction
+- Modulation identification
+- FSK / PSK / QAM demodulation
+- De-interleaving
+- FEC identification/decoding
+- Bitstream correlation
+- Header/payload structure discovery
+- GUI-based workflow
+- Advanced DSP + ML
+- Support for incomplete or heterogeneous recording metadata
+
+IMPORTANT:
+This is a capability comparison, not a ranking of products. Existing tools solve different parts of the problem extremely well. The opportunity is to integrate those capabilities into a single automated, evidence-driven workflow.
+
+
+1. EXECUTIVE COMPARISON
+=======================
+
+Solution                 | Main Strength                         | Main Role
+-------------------------|---------------------------------------|----------------------------
+GNU Radio                | Flexible DSP/SDR framework            | Build signal-processing chains
+SDRangel                 | Full-featured SDR GUI + plugins       | Interactive SDR reception/analysis
+SDR++                    | Fast, lightweight SDR GUI             | Live SDR monitoring/visualization
+Inspectrum               | Excellent captured-IQ analysis         | Offline signal inspection
+SigDigger                | Unknown-signal analysis                | Interactive signal characterization
+Universal Radio Hacker   | Protocol reverse engineering           | Demodulation/bit-level protocol work
+MATLAB Communications   | Complete communications engineering   | Simulation, PHY analysis, testing
+SatDump                  | End-to-end known-signal pipelines     | Domain-specific demodulation/decoding
+SigMF                    | Standardized sample metadata           | Data interchange/provenance
+DeepSig OmniSIG          | AI-based RF detection/classification  | Automated spectrum awareness
+PROPOSED SYSTEM          | Unified automated workflow             | Parameter -> demod -> decode -> correlate
+
+
+2. GNU RADIO
+============
+
+What it already provides
+------------------------
+GNU Radio is a mature open-source software framework for signal processing and SDR development.
+
+It provides:
+- Stream-based signal-processing blocks
+- File-based processing
+- Filtering
+- FFT/spectrum processing
+- Resampling
+- Synchronization
+- Modulation/demodulation building blocks
+- FEC framework
+- Flowgraph-based processing
+- Python and C++ development
+- GUI components
+- Hardware integration
+
+Why it is highly relevant
+--------------------------
+GNU Radio is the strongest foundation for the deterministic DSP layer of the proposed system.
+
+It can implement:
+- Input normalization
+- Channelization
+- Filtering
+- Demodulators
+- Timing/carrier recovery
+- FEC processing
+- Offline IQ/WAV processing
+- Synthetic signal generation for test datasets
+
+Where it does NOT directly solve the entire problem
+----------------------------------------------------
+GNU Radio is primarily a framework/toolkit rather than a turnkey autonomous analyst.
+
+The user generally has to decide:
+- Which blocks to use
+- Which modulation is present
+- What sample rate assumptions are valid
+- Which synchronization chain should be used
+- Which FEC configuration should be tested
+- How the final results should be interpreted
+
+A custom application is therefore needed above GNU Radio.
+
+Role in our system
+------------------
+USE AS:
+- DSP execution engine
+- FEC/demodulation building blocks
+- signal generation engine
+- test/simulation engine
+
+DO NOT MAKE:
+- GNU Radio Companion itself the product UI
+- flowgraph selection the only automation mechanism
+
+
+3. SDRANGEL
+===========
+
+What it provides
+-----------------
+SDRangel is a broad SDR application with source plugins, channel RX plugins, spectrum analysis and many protocol/demodulation plugins.
+
+Its architecture supports:
+- Spectrum analysis
+- Scope/time-domain visualization
+- Waterfall
+- Multiple channels
+- Demodulators
+- Protocol/domain-specific decoders
+- File IQ recording
+- Analysis plugins
+- SigMF-related functionality
+- Hardware integration
+
+Important strength
+------------------
+SDRangel shows how a mature application can combine:
+- Wideband spectrum
+- Channelized analysis
+- Per-channel processing
+- Specialized demodulators
+- Plugin architecture
+
+Its current documentation describes channel RX plugins for many signal types and analysis functions.
+
+Limitations relative to our requirement
+----------------------------------------
+The primary workflow is still an interactive SDR application.
+
+The user often needs to:
+- Choose the channel
+- Choose the demodulator
+- Configure parameters
+- Understand the signal
+- Select the correct specialized plugin
+
+The problem statement asks for more automation:
+- automatic parameter extraction
+- automatic modulation hypothesis generation
+- automated interleaver/FEC hypothesis testing
+- unified result confidence
+- automated bitstream correlation
+- structured header/payload discovery
+
+Role in our system
+------------------
+Use SDRangel as:
+- design reference for interactive analysis
+- source of ideas for modular signal-analysis UI
+- reference for plugin architecture
+
+Do NOT simply duplicate its large multi-window SDR interface.
+
+
+4. SDR++
+=======
+
+What it provides
+----------------
+SDR++ is designed as a lightweight, cross-platform SDR application.
+
+Its documented strengths include:
+- Multi-VFO
+- Broad hardware support
+- SIMD-accelerated DSP
+- Waterfall
+- Cross-platform operation
+- Modular/plugin architecture
+
+Best suited for
+----------------
+- Live SDR monitoring
+- Fast spectrum browsing
+- Wide hardware compatibility
+- Lightweight desktop SDR operation
+
+Gap relative to the project
+----------------------------
+SDR++ is primarily an SDR receiver/monitoring platform.
+
+The problem statement requires a deeper offline analysis workflow:
+- signal segmentation
+- automatic parameter extraction
+- modulation classification
+- FEC/interleaver investigation
+- bitstream correlation
+- evidence and confidence
+- report generation
+
+Role in our system
+------------------
+Use SDR++ as a UI/performance reference for:
+- responsive spectrum/waterfall interaction
+- plugin architecture
+- lightweight operation
+
+
+5. INSPECTRUM
+============
+
+What it provides
+-----------------
+Inspectrum is specifically intended for analysis of captured SDR signals.
+
+Its documented features include:
+- Support for large 100GB+ files
+- Spectrogram with zoom/pan
+- Amplitude plots
+- Frequency plots
+- Phase plots
+- IQ plots
+- Cursors for measuring period
+- Symbol-rate measurement
+- Symbol extraction
+- Export of filtered samples
+- Export of demodulated data
+- Support for many IQ formats
+- SigMF support
+
+Why it is especially relevant
+------------------------------
+Inspectrum is very close to the offline analysis part of the problem statement.
+
+It is particularly good for:
+- visual investigation
+- measuring signal characteristics
+- working with large captures
+- extracting sections of a recording
+- manually determining timing/symbol information
+
+Gap relative to the project
+----------------------------
+Its strength is analyst-assisted investigation rather than a full autonomous inference pipeline.
+
+The proposed system should add:
+- automatic detection
+- automatic parameter estimation
+- modulation hypotheses
+- automatic demodulation selection
+- FEC hypothesis search
+- interleaver hypothesis search
+- bitstream correlation
+- evidence/confidence reporting
+- unified session/reporting layer
+
+Role in our system
+------------------
+Inspectrum should be treated as one of the most important reference applications for the offline analysis UX.
+
+
+6. SIGDIGGER
+============
+
+What it provides
+-----------------
+SigDigger is a Qt-based digital signal analyzer designed to extract information from unknown radio signals.
+
+It supports:
+- SDR devices through SoapySDR
+- Adjustable FSK/PSK/ASK demodulation
+- Analog modes
+- Digital signal analysis
+- Bursty signal analysis
+- Signal characterization
+- Time/frequency analysis
+- Manual and automatic parameter estimation
+
+Why it matters
+--------------
+It already addresses an important part of the problem statement:
+"analyze unknown signals rather than simply listen to known broadcast channels."
+
+Gap relative to our system
+--------------------------
+The target project goes further into:
+- FEC family identification
+- interleaver detection
+- automated candidate exploration
+- complete bitstream processing
+- structured header/payload analysis
+- confidence/evidence aggregation
+- a single automated pipeline from raw capture to decoded structure
+
+Role in our system
+------------------
+Use SigDigger as a benchmark for:
+- unknown-signal characterization
+- digital demodulation UX
+- measurement tools
+
+
+7. UNIVERSAL RADIO HACKER (URH)
+===============================
+
+What it provides
+-----------------
+URH is aimed at investigating unknown wireless protocols.
+
+Documented capabilities include:
+- SDR hardware interfaces
+- signal demodulation
+- protocol investigation
+- participant labeling
+- customizable decodings
+- analysis of encoded/whitened data
+- protocol-oriented visualization
+- bit-level analysis
+
+Why it matters
+--------------
+URH demonstrates the value of moving from:
+RF waveform
+   ->
+demodulated signal
+   ->
+bitstream
+   ->
+protocol structure
+
+This is highly relevant to the project's final bitstream-correlation stage.
+
+Gap relative to our system
+--------------------------
+URH focuses heavily on protocol investigation and reverse engineering.
+
+The proposed system's distinctive focus should be:
+- automated signal parameter extraction before protocol work
+- systematic modulation hypothesis generation
+- FEC/interleaver candidate search
+- decoding validation
+- evidence-based confidence
+- unified WAV/IQ/SigMF ingestion
+- repeatable analysis sessions
+
+Role in our system
+------------------
+Use URH as a reference for:
+- bitstream UI
+- protocol/frame visualization
+- decoding workflows
+- analyst interaction
+
+
+8. MATLAB COMMUNICATIONS TOOLBOX
+================================
+
+What it provides
+-----------------
+MATLAB Communications Toolbox provides a very broad engineering environment for:
+- modulation
+- synchronization
+- coding
+- channel models
+- waveform generation
+- test-vector creation
+- PHY analysis
+- OTA SDR testing
+- AI dataset generation
+- performance evaluation
+- standards-based communications modeling
+
+This is arguably the broadest engineering environment for building and validating communication algorithms.
+
+Advantages
+----------
+- Mature algorithms
+- Extensive documentation
+- Strong simulation tools
+- Strong signal-generation tools
+- Excellent for controlled ground-truth experiments
+- Useful for generating AI datasets with impairments
+- Supports deployment workflows
+
+Limitations
+-----------
+- Commercial
+- Not ideal as the foundation of a lightweight open desktop product
+- Large ecosystem
+- Custom application packaging has additional considerations
+- A deployable standalone solution may need additional MathWorks products
+
+Role in our system
+------------------
+Use as:
+- algorithm validation reference
+- ground-truth signal generation reference
+- communications research environment
+- benchmarking platform
+
+For the proposed product:
+- Prefer Python + GNU Radio + C/C++ for the main application.
+- MATLAB can be used during R&D if available.
+
+
+9. SATDUMP
+==========
+
+What it provides
+-----------------
+SatDump is a generic satellite data-processing application with a GUI pipeline model.
+
+It can process:
+- recorded baseband data
+- frames
+- soft symbols
+- known demodulation/decoding pipelines
+
+It demonstrates:
+- pipeline-based processing
+- configurable sample inputs
+- demodulation
+- decoding
+- data products
+- reusable processing modules
+
+Strength
+--------
+Excellent example of:
+"select input -> select known processing pipeline -> execute -> produce decoded data"
+
+Gap
+---
+The project's problem is broader and more blind-analysis oriented.
+
+SatDump generally expects a known or recognizable mission/signal pipeline.
+
+Our project should be designed for cases where:
+- modulation is not known
+- symbol rate is not known
+- FEC is not known
+- interleaver is not known
+- capture metadata may be incomplete
+
+Role
+----
+Use SatDump as an architecture reference for:
+- pipeline execution
+- processing profiles
+- result artifacts
+- modular signal processors
+
+
+10. SIGMF
+=========
+
+What it provides
+-----------------
+SigMF is not an analysis application.
+
+It is a standard for describing recorded signal datasets and associated metadata.
+
+A SigMF recording typically consists of:
+- .sigmf-data
+- .sigmf-meta
+
+Metadata can describe:
+- datatype
+- sample rate
+- hardware
+- author
+- frequency
+- capture boundaries
+- annotations
+- other recording information
+
+Why this is extremely important
+--------------------------------
+The problem statement explicitly says recordings may come from:
+- different sensors
+- different locations
+- different recording settings
+- different file formats
+
+SigMF provides a standard way to preserve acquisition metadata.
+
+Recommendation
+--------------
+Make SigMF a first-class input format in the proposed system.
+
+Supported input formats should become:
+
+- WAV
+- Raw IQ
+- SigMF
+- GNU Radio-compatible complex sample files
+- Future formats through an importer plugin
+
+This is one of the most practical ways to reduce ambiguity during analysis.
+
+
+11. DEEPSIG OMNISIG
+===================
+
+What it provides
+-----------------
+DeepSig's OmniSIG is the closest commercially available example to the AI side of this concept.
+
+According to DeepSig's current product information, OmniSIG provides:
+- AI-based RF signal detection
+- signal classification
+- localization capabilities
+- real-time spectrum awareness
+- wideband operation
+- detection of known and unknown signal types
+- time/frequency neural processing
+- hardware integration
+- SigMF/JSON integration
+- deployment on CPU/GPU/edge environments
+
+DeepSig also provides OmniSIG Studio for:
+- data curation
+- signal labeling
+- annotation
+- neural model training
+- model deployment
+
+Why it is relevant
+------------------
+This proves that ML-driven automatic RF classification is an established technical direction.
+
+Important gap
+-------------
+The project's problem statement is not simply:
+
+"Detect and classify RF signals."
+
+It asks for a much deeper chain:
+
+IQ/WAV
+ -> parameter estimation
+ -> modulation
+ -> demodulation
+ -> de-interleaving
+ -> FEC
+ -> bitstream
+ -> correlation
+ -> header/payload structure
+
+Commercial spectrum-awareness systems may cover classification exceptionally well, but the proposed project can focus on making the downstream physical-layer analysis chain explicit, inspectable, reproducible and extensible.
+
+Important caution
+-----------------
+DeepSig's current public dataset page explicitly says its older open RadioML datasets contain known errata and recommends real data or researcher-generated data for new work. This means our training strategy should NOT be built around one historical dataset alone.
+
+
+12. CURRENT LANDSCAPE SUMMARY
+=============================
+
+The important observation is:
+
+NO SINGLE OPEN-SOURCE TOOL CLEARLY PROVIDES THE ENTIRE REQUESTED PIPELINE AS ONE AUTOMATED APPLICATION.
+
+Instead, the ecosystem is fragmented:
+
+GNU Radio
+    -> DSP building blocks
+
+SDRangel / SDR++ / SigDigger
+    -> interactive SDR analysis
+
+Inspectrum
+    -> detailed captured-IQ investigation
+
+URH
+    -> bit-level protocol investigation
+
+MATLAB
+    -> communications algorithm engineering and simulation
+
+SatDump
+    -> known-signal pipeline processing
+
+SigMF
+    -> metadata interoperability
+
+DeepSig OmniSIG
+    -> AI-based RF detection/classification
+
+The proposed system can therefore be positioned as an
+AUTOMATED ANALYSIS ORCHESTRATION LAYER
+above proven DSP and decoding technologies.
+
+
+13. CAPABILITY MATRIX AGAINST THE PROBLEM STATEMENT
+====================================================
+
+Legend:
++++ = strong/native capability
+++  = available but typically configured/interactive
++   = possible with custom development
+-   = not the main purpose
+
+Requirement                    GNU   SDRang SDR++ Inspec SigDig URH  MATLAB SatDump SigMF DeepSig
+----------------------------- ----- ------ ------ ------ ------ ---- ------ ------- ----- --------
+IQ ingestion                  +++   +++    +++    +++    +++    +++  +++    +++     +++   +++
+WAV ingestion                 +++   ++     ++     +     ++     +    +++    +       +++   +
+Spectrum                      +++   +++    +++    +++    +++    ++   +++    ++      -     +++
+Waterfall                     ++    +++    +++    +++    +++    ++   +++    ++      -     +++
+Constellation                 ++    ++     +      +++    ++     ++   +++    +       -     ++
+Signal segmentation           +     ++     ++     +++    +++    ++   ++     ++      -     +++
+Symbol-rate estimation       +     ++     +     +++    ++     ++   +++    +       -     ++
+Automatic modulation ID       +     +      +      -/+   ++     +    +++    +       -     +++
+ML modulation ID              +     -/+   -/+    -      -      -    +++    -       -     +++
+FSK demod                     +++   +++    ++     ++     +++    ++   +++    ++      -     ++
+PSK demod                     +++   +++    ++     ++     +++    ++   +++    ++      -     ++
+QAM demod                     ++    ++     ++     +     +      +    +++    ++      -     ++
+FEC building blocks           +++   ++     +      -      +      ++   +++    +++     -     +
+FEC auto-identification      +     +      -      -      -      +    ++     +       -     ++
+Interleaver identification   +     -      -      -      -      +    ++     +       -     +
+Bitstream extraction          ++    ++     +      ++     ++     +++  +++    +++     -     +
+Bit correlation               +     +      -      +      +      +++  ++     ++      -     +
+Header/payload discovery     +     +      -      +      +      +++  ++     +++     -     +
+Protocol investigation        +     ++     +      +      ++     +++  ++     +++     -     +
+Unknown-signal workflow      ++    ++     +      +++    +++    +++  ++     +       -     +++
+AI/custom model training      ++    -      -      -      -      -    +++    -       -     +++
+Metadata standardization      ++    ++     ++     +++    +      +    ++     ++      +++   +++
+Offline workflow             +++   +++    +++    +++    +++    +++  +++    +++     +++   ++
+Unified automated pipeline   +     +      +      +      +      ++   ++     +++     -     ++
+
+
+14. WHAT THE PROPOSED SYSTEM CAN ADD
+====================================
+
+The opportunity is NOT to rebuild GNU Radio, SDRangel, Inspectrum or MATLAB.
+
+The opportunity is to orchestrate proven capabilities into one analysis workflow.
+
+A. UNIFIED INPUT LAYER
+----------------------
+Current tools often assume specific file structures or user knowledge.
+
+Build one import layer for:
+- WAV
+- Raw IQ
+- SigMF
+- GNU Radio IQ formats
+- future plugin-based formats
+
+Automatically detect:
+- datatype
+- I/Q ordering
+- endianness
+- sample width
+- number of channels
+- sample rate if metadata exists
+- center frequency if metadata exists
+
+If unknown:
+- show a compact "Assumptions Required" panel
+- offer candidate configurations
+- preview spectrum for each candidate
+
+
+B. METADATA + INFERENCE SEPARATION
+----------------------------------
+Every result should carry provenance.
+
+Example:
+
+Parameter:
+  Symbol rate = 9600
+
+Source:
+  waveform inference
+
+Algorithm:
+  cyclostationary + timing recovery
+
+Confidence:
+  0.84
+
+Validation:
+  timing loop converged
+
+Alternative:
+  9600 ± 50 symbols/s
+
+This is much more useful than simply displaying "9600".
+
+
+C. AUTOMATED HYPOTHESIS ENGINE
+------------------------------
+Instead of requiring the user to choose the processing chain:
+
+1. Detect signal
+2. Estimate features
+3. Generate candidate modulations
+4. Generate candidate symbol rates
+5. Try synchronization
+6. Demodulate candidates
+7. Generate candidate bitstreams
+8. Test interleavers
+9. Test FEC configurations
+10. Score resulting structures
+11. Return the most internally consistent candidates
+
+Conceptually:
+
+raw signal
+    ->
+candidate hypotheses
+    ->
+candidate processing chains
+    ->
+validation metrics
+    ->
+ranked evidence
+
+This is the central differentiator.
+
+
+D. MODULATION + PARAMETER JOINT INFERENCE
+------------------------------------------
+Instead of classifying modulation alone, infer a coupled parameter set:
+
+{
+  modulation: QPSK,
+  symbol_rate: 9600,
+  excess_bandwidth: candidate,
+  carrier_offset: candidate,
+  timing_solution: candidate,
+  SNR: candidate
+}
+
+A candidate is accepted only when multiple independent measurements agree.
+
+
+E. FEC HYPOTHESIS SEARCH
+------------------------
+Current tools provide many decoders.
+
+The missing automation is:
+"Which decoder configuration should I try?"
+
+Build a candidate generator.
+
+For convolutional coding:
+- rate
+- constraint length
+- generator polynomials
+- puncturing
+- termination
+
+For Reed-Solomon:
+- code length
+- message length
+- symbol size
+- block structure
+
+For LDPC:
+- block size
+- code rate
+- candidate parity-check family
+- decoder parameters
+
+Score each candidate using:
+- syndrome validity
+- CRC/frame checks when available
+- decoded bit consistency
+- reduction in apparent errors
+- repeated-frame consistency
+
+This creates an automated FEC-analysis layer rather than merely exposing FEC libraries.
+
+
+F. INTERLEAVER HYPOTHESIS ENGINE
+--------------------------------
+Treat the interleaver as a permutation-hypothesis problem.
+
+Candidate:
+  Block 8 x 128
+
+Reverse permutation
+    ->
+FEC decoder
+    ->
+validation
+
+If validation improves significantly:
+    candidate remains
+
+Otherwise:
+    reject
+
+Repeat for:
+- block
+- convolutional
+- diagonal
+- pseudo-random
+
+The system should show the tested candidates and why they were rejected/accepted.
+
+
+G. EVIDENCE GRAPH
+-----------------
+A major opportunity is to visualize WHY the system believes a result.
+
+Example:
+
+                     QPSK
+                      |
+        +-------------+-------------+
+        |             |             |
+    constellation   HOC         cyclostationary
+        |             |             |
+        +-------------+-------------+
+                      |
+                 confidence
+                    0.87
+                      |
+                    PASS
+                      |
+                  demodulator
+                      |
+                  bitstream
+                      |
+             interleaver candidate
+                      |
+                 FEC candidate
+                      |
+               validation result
+
+This transforms the system from a "black-box classifier" into an analysis assistant.
+
+
+H. REPRODUCIBLE ANALYSIS SESSIONS
+---------------------------------
+Every run should store:
+
+- input hash
+- input format
+- metadata
+- assumptions
+- preprocessing configuration
+- algorithm version
+- model version
+- estimated parameters
+- candidate hypotheses
+- validation scores
+- output artifacts
+- plots
+
+A session can then be reopened and reproduced.
+
+
+I. A SINGLE HIGH-QUALITY UX
+---------------------------
+Most current tools are engineering tools.
+
+The project can provide a focused analyst workflow:
+
+IMPORT
+  ->
+AUTO ANALYZE
+  ->
+UNDERSTAND
+  ->
+VALIDATE
+  ->
+DEMODULATE
+  ->
+DECODE
+  ->
+CORRELATE
+  ->
+EXPORT
+
+The UI should not expose 50 DSP parameters on the first screen.
+
+Progressive disclosure should be used:
+
+Level 1:
+  "What did we find?"
+
+Level 2:
+  "Why?"
+
+Level 3:
+  "Show measurements"
+
+Level 4:
+  "Let me change processing"
+
+Level 5:
+  "Let me run a custom hypothesis"
+
+
+15. "AWWARDS-LEVEL" UI/UX OPPORTUNITY
+====================================
+
+The existing ecosystem tends to prioritize technical capability over visual product design.
+
+The proposed UI can deliberately prioritize:
+- minimal chrome
+- dense but readable information
+- high-performance visualizations
+- subtle motion
+- keyboard-first workflow
+- clear hierarchy
+- strong empty states
+- clear analysis progress
+- excellent typography
+- consistent cards/panels
+- deep zoom/pan interactions
+- comparison views
+- timeline navigation
+
+Core screen:
+
++--------------------------------------------------------------+
+| SIGNAL ANALYZER                            session-014       |
+|--------------------------------------------------------------|
+|                                                              |
+|  CAPTURE                                                     |
+|  capture_001.sigmf                                           |
+|  2.4 MS/s · 433.92 MHz · 8.2 sec                            |
+|                                                              |
+|  ┌──────────────────────────────────────────────────────┐    |
+|  │                     WATERFALL                         │    |
+|  │                                                      │    |
+|  │                signal activity                       │    |
+|  │                                                      │    |
+|  └──────────────────────────────────────────────────────┘    |
+|                                                              |
+|  SPECTRUM                         SIGNAL PROFILE              |
+|  ─────────                       ───────────────             |
+|  -24 dB                           Modulation   QPSK           |
+|  center frequency                 Confidence   87%            |
+|                                   Symbol rate  9.6 kSym/s    |
+|                                                              |
+|  [ CONSTELLATION ]                [ ANALYSIS PIPELINE ]      |
+|                                                              |
+|                                  Detect       ✓              |
+|                                  Estimate     ✓              |
+|                                  Modulation   ✓              |
+|                                  Demodulate   ✓              |
+|                                  Interleave   ?              |
+|                                  FEC          ?              |
+|                                  Correlate    ○              |
++--------------------------------------------------------------+
+
+The key design principle:
+THE SCREEN SHOULD SHOW THE SIGNAL AND THE SYSTEM'S REASONING TOGETHER.
+
+
+16. BIGGEST TECHNICAL GAP TO SOLVE
+===================================
+
+The hardest part is NOT:
+- FFT
+- waterfall
+- plotting
+- basic FSK/PSK/QAM demodulation
+
+Those are mature.
+
+The hardest part is:
+
+UNKNOWN SIGNAL
+      ->
+UNKNOWN PARAMETERS
+      ->
+UNKNOWN BIT STRUCTURE
+      ->
+UNKNOWN INTERLEAVER
+      ->
+UNKNOWN FEC
+      ->
+VALIDATED BITSTREAM
+
+Therefore research effort should concentrate on:
+1. hypothesis generation
+2. parameter estimation
+3. blind synchronization
+4. interleaver inference
+5. FEC hypothesis testing
+6. validation
+7. confidence estimation
+
+
+17. PROPOSED SYSTEM ARCHITECTURE
+================================
+
+                    +----------------------+
+                    |       GUI/UX         |
+                    | PySide6 + PyQtGraph  |
+                    +----------+-----------+
+                               |
+                    +----------v-----------+
+                    | Analysis Orchestrator|
+                    +----------+-----------+
+                               |
+         +---------------------+----------------------+
+         |                     |                      |
+         v                     v                      v
+  Input/Metadata         Signal Analysis       ML Inference
+  WAV/IQ/SigMF           FFT/STFT/PSD          Classification
+  normalization          detection             parameter model
+         |                     |                      |
+         +---------------------+----------------------+
+                               |
+                     +---------v----------+
+                     | Hypothesis Engine  |
+                     +---------+----------+
+                               |
+          +--------------------+---------------------+
+          |                    |                     |
+          v                    v                     v
+     Demodulator        Interleaver Engine       FEC Engine
+     FSK/PSK/QAM        candidate search        candidate search
+          |                    |                     |
+          +--------------------+---------------------+
+                               |
+                     +---------v----------+
+                     | Validation Engine  |
+                     | CRC/syndrome/etc.  |
+                     +---------+----------+
+                               |
+                     +---------v----------+
+                     | Correlation Engine |
+                     +---------+----------+
+                               |
+                     +---------v----------+
+                     | Evidence/Report    |
+                     +--------------------+
+
+
+18. WHAT SHOULD NOT BE REBUILT
+==============================
+
+Reuse mature components wherever possible.
+
+DO NOT REIMPLEMENT FROM SCRATCH:
+- FFT mathematics
+- standard filters
+- basic resamplers
+- standard Viterbi algorithms
+- standard Reed-Solomon implementations
+- standard LDPC implementations
+- basic waveform plotting
+- basic SDR hardware drivers
+- SigMF parsing standard
+
+Instead build:
+- orchestration
+- hypothesis search
+- parameter estimation
+- confidence
+- validation
+- analysis UX
+- session/reproducibility
+- model management
+- automated reporting
+
+
+19. WHERE ML ACTUALLY ADDS VALUE
+================================
+
+Best ML targets:
+
+HIGH VALUE
+----------
+- modulation classification
+- signal detection
+- representation learning
+- signal clustering
+- anomaly detection
+- parameter candidate generation
+
+MEDIUM VALUE
+------------
+- symbol-rate estimation
+- waveform family recognition
+- candidate FEC/interleaver ranking
+
+LOW VALUE / SHOULD REMAIN DETERMINISTIC WHERE POSSIBLE
+-------------------------------------------------------
+- FFT
+- standard filtering
+- known synchronization algorithms
+- standard FEC decoding
+- exact bit operations
+- CRC checks
+
+Recommended architecture:
+
+DSP
+  ->
+features / IQ representations
+  ->
+ML candidate generator
+  ->
+deterministic validation
+  ->
+final result
+
+
+20. WHAT "MORE" CAN BE ACHIEVED IN FUTURE VERSIONS
+===================================================
+
+Beyond the current problem statement, the architecture can evolve toward:
+
+A. Automatic signal clustering
+- group previously unseen recordings by waveform similarity
+
+B. Weakly supervised learning
+- learn from partially labeled datasets
+
+C. Continual learning
+- add validated examples without retraining the entire system
+
+D. Model-assisted signal search
+- locate similar signals across large archives
+
+E. Cross-recording correlation
+- compare signal structures across multiple captures
+
+F. Automatic capture comparison
+- identify what changed between two recordings
+
+G. Parameter provenance
+- show exactly which observation produced each estimate
+
+H. Confidence calibration
+- distinguish high-confidence results from ambiguous ones
+
+I. Analyst feedback loop
+- user confirms/rejects a hypothesis
+- system records feedback
+- dataset improves
+
+J. Reproducible experiment mode
+- freeze data, algorithms and model versions
+- compare two analysis configurations
+
+K. Hardware abstraction
+- process offline recordings now
+- later connect directly to SDR hardware
+
+L. Distributed processing
+- large archives processed using worker nodes
+
+M. GPU acceleration
+- parallel FFT/STFT
+- neural classification
+- wideband batch processing
+
+N. Plugin ecosystem
+- add new demodulators
+- add new FECs
+- add new signal classifiers
+- add new import formats
+
+
+21. RECOMMENDED DEVELOPMENT STRATEGY
+====================================
+
+PHASE 1 — CORE VIEWER
+---------------------
+Implement:
+- WAV
+- IQ
+- SigMF
+- spectrum
+- waterfall
+- constellation
+- time domain
+- file metadata
+- session management
+
+PHASE 2 — AUTOMATIC SIGNAL ANALYSIS
+-----------------------------------
+Implement:
+- signal detection
+- bandwidth
+- SNR
+- carrier/frequency estimates
+- symbol-rate estimation
+- modulation hypotheses
+
+PHASE 3 — DEMODULATION
+----------------------
+Implement:
+- FSK
+- BPSK/QPSK
+- QAM
+- timing recovery
+- carrier recovery
+- bit extraction
+
+PHASE 4 — STRUCTURE RECOVERY
+----------------------------
+Implement:
+- bit correlation
+- frame detection
+- header candidate detection
+- repeated pattern analysis
+
+PHASE 5 — FEC
+-------------
+Implement:
+- Viterbi
+- Reed-Solomon
+- concatenated codes
+- LDPC
+
+PHASE 6 — INTERLEAVERS
+----------------------
+Implement:
+- block
+- convolutional
+- diagonal
+- pseudo-random
+- candidate search
+
+PHASE 7 — AI
+------------
+Implement:
+- modulation model
+- signal detector
+- feature embeddings
+- clustering
+- candidate ranking
+
+PHASE 8 — AUTOMATED HYPOTHESIS SEARCH
+-------------------------------------
+End-to-end:
+
+capture
+ -> detect
+ -> estimate
+ -> classify
+ -> synchronize
+ -> demodulate
+ -> deinterleave
+ -> FEC
+ -> validate
+ -> correlate
+ -> report
+
+
+22. FINAL POSITIONING
+=====================
+
+Do not position the project as:
+
+"Another SDR application."
+
+A more accurate technical positioning is:
+
+"An automated RF waveform analysis and parameter-extraction platform that combines deterministic DSP, machine learning and hypothesis-driven decoding to transform heterogeneous IQ/WAV recordings into validated signal parameters and structured bitstream evidence."
+
+Existing tools already provide most low-level building blocks.
+
+The differentiating engineering layer is:
+
+1. Heterogeneous input normalization
+2. Automatic parameter inference
+3. Hypothesis generation
+4. Hypothesis validation
+5. Interleaver/FEC candidate search
+6. Bitstream correlation
+7. Evidence/provenance
+8. Reproducible analysis sessions
+9. Integrated visual analytics
+10. Clean analyst-first UX
+
+
+23. SOURCES / CURRENT REFERENCES
+================================
+
+GNU Radio
+https://www.gnuradio.org/
+https://wiki.gnuradio.org/
+
+SDR++
+https://github.com/AlexandreRouma/SDRPlusPlus
+
+SDRangel
+https://github.com/f4exb/sdrangel
+
+Inspectrum
+https://github.com/miek/inspectrum
+
+SigDigger
+https://github.com/BatchDrake/SigDigger
+
+Universal Radio Hacker
+https://github.com/jopohl/urh
+(Note: current repository/fork visibility may vary; the Universal Radio Hacker project documentation describes its wireless-protocol investigation workflow.)
+
+SigMF
+https://sigmf.org/
+https://github.com/sigmf/SigMF
+
+MATLAB Communications Toolbox
+https://www.mathworks.com/products/communications.html
+https://www.mathworks.com/help/comm/
+
+SatDump
+https://github.com/SatDump/SatDump
+
+DeepSig OmniSIG
+https://www.deepsig.ai/omnisig/
+https://www.deepsig.ai/omnisig-studio/
+
+DeepSig datasets
+https://www.deepsig.ai/datasets/
+
+
+24. CURRENT FACTS USED IN THIS COMPARISON
+=========================================
+
+- GNU Radio is a general-purpose open-source signal-processing/SDR framework rather than a single autonomous unknown-signal analyst.
+- SDR++ emphasizes lightweight, cross-platform SDR operation, broad hardware support, waterfall visualization and plugin modularity.
+- SDRangel uses a source/channel-plugin architecture and provides many demodulation and analysis plugins.
+- Inspectrum explicitly supports large captured files, spectrograms, IQ/amplitude/frequency/phase views, symbol-rate measurement and export of filtered/demodulated data.
+- SigDigger focuses on unknown-signal analysis and supports FSK, PSK and ASK digital demodulation.
+- URH focuses strongly on investigation of unknown wireless protocols and customized decoding.
+- MATLAB Communications Toolbox covers communications-system simulation, PHY algorithms, waveform generation, testing, AI dataset generation and SDR verification, but is a commercial ecosystem.
+- SatDump provides GUI-driven processing pipelines for recorded baseband/frames/soft symbols, especially for known signal families.
+- SigMF standardizes metadata around recorded sample datasets and is highly relevant to heterogeneous IQ data interchange.
+- DeepSig OmniSIG currently represents a commercial AI-centric spectrum-awareness approach combining signal detection/classification and wideband RF analytics.
+- DeepSig explicitly warns that its historical public RadioML datasets have known errata and recommends real or newly generated data for current research.
+
+The central conclusion is not that existing solutions are inadequate. Rather, the problem statement spans several categories that are traditionally separated across different tools. The strongest opportunity is to combine proven DSP/SDR infrastructure with an automated inference, validation, FEC/interleaver-analysis and evidence layer.
+
+
+25. ONE-SENTENCE DIFFERENTIATOR
+==============================
+
+Existing tools are strong at signal processing, visualization, demodulation, protocol analysis, or AI classification individually; the proposed system can focus on automatically connecting these stages into one reproducible pipeline that goes from heterogeneous capture -> measurable evidence -> candidate parameters -> validated demodulation -> coding/interleaver hypotheses -> structured bitstream analysis.

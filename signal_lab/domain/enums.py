@@ -7,6 +7,7 @@ class SourceFormat(str, Enum):
     WAV = "wav"
     IQ = "iq"
     RAW = "raw"
+    SIGMF = "sigmf"
 
 
 class SampleFormat(str, Enum):

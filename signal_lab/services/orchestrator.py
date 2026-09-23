@@ -39,6 +39,7 @@ class AnalysisWorker(QObject):
     progress_updated = Signal(str, float, str)  # stage_name, progress_0_to_1, status_message
     stage_completed = Signal(str, str)  # stage_name, status ("done" / "failed")
     analysis_finished = Signal(object, object, object)  # segments, evidence, modulation_candidate
+    demodulation_completed = Signal(object)  # DemodulationResult
     error_occurred = Signal(str)
 
     def __init__(
@@ -115,6 +116,7 @@ class AnalysisWorker(QObject):
         # Stage 4: Demodulation
         self.progress_updated.emit("demod", 0.60, f"Demodulating as {top_mod}...")
         demod_res = demodulate_signal(self.buffer, modulation=top_mod, sps=4)
+        self.demodulation_completed.emit(demod_res)
         self.stage_completed.emit("demod", "done")
 
         if self._is_cancelled:
@@ -171,6 +173,7 @@ class AnalysisOrchestrator(QObject):
     progress_updated = Signal(str, float, str)
     stage_completed = Signal(str, str)
     analysis_completed = Signal(object, object, object)
+    demodulation_completed = Signal(object)
     analysis_failed = Signal(str)
 
     def __init__(
@@ -201,6 +204,7 @@ class AnalysisOrchestrator(QObject):
         self._current_thread.started.connect(self._current_worker.run)
         self._current_worker.progress_updated.connect(self.progress_updated.emit)
         self._current_worker.stage_completed.connect(self.stage_completed.emit)
+        self._current_worker.demodulation_completed.connect(self.demodulation_completed.emit)
         self._current_worker.analysis_finished.connect(self._on_worker_finished)
         self._current_worker.error_occurred.connect(self.analysis_failed.emit)
 

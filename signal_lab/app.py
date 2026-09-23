@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import logging
 import os
+import signal
 import sys
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
 from signal_lab.gui.main_window import MainWindow
@@ -27,9 +29,18 @@ def create_app() -> tuple[QApplication, MainWindow]:
     # Qt attributes
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
+    # Clean Ctrl+C handling
+    signal.signal(signal.SIGINT, lambda *args: QApplication.quit())
+
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)
+
+    # Periodic timer to allow Python signal handler to run on event loop
+    timer = QTimer()
+    timer.timeout.connect(lambda: None)
+    timer.start(250)
+    app._sigint_timer = timer  # type: ignore[attr-defined]
 
     app.setApplicationName("Signal Lab")
     app.setOrganizationName("SignalLab")

@@ -55,17 +55,26 @@
 - `services/orchestrator.py`: Multi-threaded `QThread` async pipeline runner.
 - `services/evidence_engine.py`: Multi-source confidence fusion ($0.0 - 1.0$).
 - `services/report_service.py`: JSON, CSV, and Markdown audit report generator.
-- `gui/main_window.py`: Application shell with `HeaderBar`, `DropZone`, `AnalysisWorkspace`, and `PipelineStatus`.
-- `gui/widgets/assumptions_dialog.py`: Interactive modal with live miniature FFT preview for uncalibrated signals.
-- `gui/widgets/bitstream_viewer.py`: Hex/Binary/ASCII inspector with preamble highlighting and click-to-waveform navigation.
-- `gui/plots/`: Synchronized PyQtGraph instruments: Waterfall (with `set_region`), Waveform, Spectrum, Constellation.
-- `cpp/fast_kernels.cpp`: C++ pybind11 SIMD-accelerated math kernels.
+- `server.py`: High-performance asynchronous FastAPI server providing multi-resolution LOD min-max decimation, I/Q constellation decimation, 2D STFT spectrogram waterfall, hybrid AMC neural extraction, multi-scheme demodulation, GF(2) rank discovery, FEC decoding (Viterbi/RS/Concatenated/LDPC), and bitstream sync correlation. Auto-fallback ensures zero 404s.
+- `frontend/`: Full-stack React 19 + TypeScript + Vite + Three.js + Tailwind v4 RF intelligence workbench:
+  - `components/canvas/CanvasContainer.tsx`: Three.js WebGL 3D Harmonic Tensor Ribbon Wavefield (15 parametric ribbon tubes with spectral chrominance, spatial damping, interactive mouse ripple interference, and 60 FPS lock). Toggleable via `3D WAVE: ON/OFF`.
+  - `components/SmoothWaveform.tsx`: Real-time 60 FPS digital storage oscilloscope with dynamic auto-gain normalization, continuous animated live sweep mode (`▶ LIVE SWEEP`), phosphor CRT glow, dual-trace I/Q, timebase zoom presets, and minimap timeline.
+  - `components/SpectrogramView.tsx`: Real-time 2D STFT spectrogram waterfall mapped through an authentic Viridis colormap (-80 dB to 0 dB).
+  - `components/ConstellationView.tsx`: RMS-normalized I/Q scatter with unit circle, $C_{40}, C_{42}$ cumulants, and EVM % gauge.
+  - `components/outcomes/Outcome1Parameters.tsx`: Dedicated Outcome I workspace for blind parameter extraction ($f_s$, 99% OBW, CFO, SNR, Baud rate, and 1D-ResNet AMC classification).
+  - `components/outcomes/Outcome2Demodulation.tsx`: Dedicated Outcome II workspace for FSK, PSK, QAM demodulation with Costas loop phase lock, Mueller-Müller timing recovery, EVM %, and color-coded bit slicer.
+  - `components/outcomes/Outcome3Deinterleaving.tsx`: Dedicated Outcome III workspace for Block, Convolutional, Diagonal, and Pseudo-Random de-interleavers with automated blind $GF(2)$ matrix rank-deficiency estimation ($M \in [4, 32]$).
+  - `components/outcomes/Outcome4Fec.tsx`: Dedicated Outcome IV workspace for Viterbi ($K=7$), Reed-Solomon $RS(255, 223)$, Concatenated, and LDPC Min-Sum decoders with syndrome validation and BER analysis.
+  - `components/outcomes/Outcome5Correlation.tsx`: Dedicated Outcome V workspace for Barker-7/11/13, CCSDS ASM, and AX.25 cross-correlation with automated header/payload segregation and 3-column synchronized hex/bit/ASCII inspector.
+  - `components/ui/Navigation.tsx`: Top navigation bar with 5-outcome tabs, capture ingestion (.IQ/.WAV upload & presets), audio drone toggle, 3D ribbon toggle, and backend status.
+  - `components/ui/OverlayDossier.tsx`: Mathematical formulation and RF architecture dossier modal (key `D`).
 
 ---
 
 ## 4. Current Test Suite Status
-- **72 unit & integration tests passing** in `tests/` in 2.40 seconds:
+- **82 unit & integration tests passing** in `tests/` in 8.53 seconds:
   - `tests/test_assumptions_dialog.py` (3 tests)
+  - `tests/test_austensor_gui.py` (5 tests)
   - `tests/test_bitstream_viewer.py` (3 tests)
   - `tests/test_classification.py` (3 tests)
   - `tests/test_conditioning.py` (5 tests)
@@ -75,7 +84,7 @@
   - `tests/test_estimation.py` (5 tests)
   - `tests/test_evidence_engine.py` (2 tests)
   - `tests/test_fec.py` (3 tests)
-  - `tests/test_fec_advanced.py` (4 tests)
+  - `tests/test_fec_advanced.py` (6 tests)
   - `tests/test_gui_shell.py` (4 tests)
   - `tests/test_hybrid_classifier.py` (3 tests)
   - `tests/test_ingestion.py` (4 tests)
@@ -84,9 +93,11 @@
   - `tests/test_plots.py` (5 tests)
   - `tests/test_real_signals.py` (3 tests)
   - `tests/test_report_service.py` (1 test)
+  - `tests/test_server_api.py` (3 tests)
   - `tests/test_sigmf.py` (4 tests)
   - `tests/test_storage.py` (2 tests)
   - `tests/test_streaming.py` (2 tests)
+- **Frontend TypeScript / Vite build**: Clean build with zero errors in 1.05s.
 - **Ruff linter compliance**: 100% clean, 0 warnings.
 - **Headless Qt testing**: Pre-configured with `QT_QPA_PLATFORM=offscreen`.
 

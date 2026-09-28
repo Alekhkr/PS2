@@ -236,9 +236,12 @@ class BitstreamViewer(QWidget):
         # Check CCSDS 32-bit (0x1ACFFC1D)
         ccsds_raw = STANDARD_SYNC_WORDS.get("CCSDS_ASM_32")
         if ccsds_raw is not None and len(self._bits) >= 32:
-            c_pat = np.array(
-                [int(b) for byte in ccsds_raw for b in f"{byte:08b}"], dtype=np.uint8
-            )
+            if len(ccsds_raw) == 32:
+                c_pat = np.array(ccsds_raw, dtype=np.uint8)
+            else:
+                c_pat = np.array(
+                    [int(b) for byte in ccsds_raw for b in f"{byte:08b}"], dtype=np.uint8
+                )
             for i in range(min(500 * bits_per_row, len(self._bits) - 32)):
                 if np.array_equal(self._bits[i : i + 32], c_pat):
                     row_idx = i // bits_per_row

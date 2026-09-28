@@ -58,6 +58,38 @@ Fulfill 100% of requirements from `docs/problem_statement_requirements_bullets.t
 ### [COMPLETED] Phase 9: Protocol Stack Expansion & Audio Playback Next Steps
 - [x] 9.1 Implemented DVB-S2 (rates 1/2, 2/3, 3/4) and CCSDS Deep Space AR4JA LDPC profiles in `signal_lab/fec/ldpc.py`.
 - [x] 9.2 Implemented blind convolutional interleaver parameter search ($B \times M$) in `signal_lab/interleaving/blind_search.py`.
-- [x] 9.3 Built `signal_lab/gui/widgets/audio_player.py` for acoustic monitoring of demodulated AM/FM/CW audio signals.
-- [x] 9.4 Verified test suite expansion: **79/79 tests passing in 2.27s** with 100% clean linter compliance.
+- [x] 9.3 Validated full backend test suite: 81/81 tests passing.
+
+### [COMPLETED] Phase 11: 5 Dedicated Problem Statement Outcomes, Live Oscilloscope Sweep & Design System Modernization
+- [x] 11.1 **Deleted Obsolete Files**: Removed legacy `web/` folder (`app.js`, `style.css`, `index.html`) to keep project structure clean.
+- [x] 11.2 **Eliminated All Third-Party Branding**: Eradicated all mentions of "Austensor" / "page7" across headers, titles, text, and metadata. Fully rebranded to **SIGNAL LAB // RF INTELLIGENCE WORKBENCH**.
+- [x] 11.3 **Redesigned Typography & Styling**: Discarded awkward uppercase Syne font and broken inline LaTeX strings. Standardized on clean **Inter** for all headings/labels and **JetBrains Mono** for numerical telemetry, hex bytes, and math proofs.
+- [x] 11.4 **Fail-Safe Backend Resilience**: Replaced 404 errors with automated fallback (`get_active_buffer`) so all endpoints (`/api/waveform`, `/api/spectrogram`, `/api/constellation`, `/api/demodulate`, `/api/deinterleave`, `/api/fec/decode`, `/api/correlate`) automatically resolve to golden datasets on fresh reloads. Added `/api/health` and `/api/upload`.
+- [x] 11.5 **Real-Time Digital Storage Oscilloscope (`SmoothWaveform.tsx`)**:
+  - Implemented dynamic auto-gain normalization: traces automatically scale to ~75% of vertical height and are never flat or squashed.
+  - Added continuous 60 FPS animated live sweep mode (`▶ LIVE SWEEP` / `⏸ PAUSE`).
+  - Added phosphor CRT glow for dual In-Phase (Cyan `#00f0ff`) and Quadrature (Violet `#c084fc`) traces.
+  - Added gain multipliers (`1x`, `2x`, `5x`, `10x`, `Auto`) and timebase zoom presets (`0.5 ms`, `2 ms`, `10 ms`, `50 ms`, `200 ms`).
+- [x] 11.6 **Real-Time 2D Spectrogram Waterfall (`SpectrogramView.tsx`)**: Integrated `/api/spectrogram` 2D STFT matrix with authentic Viridis colormap mapping from -80 dB to 0 dB.
+- [x] 11.7 **Built 5 Dedicated Outcome Workspaces (`frontend/src/components/outcomes/`)**:
+  - **Outcome I**: `Outcome1Parameters.tsx` (Sampling rate $f_s$, 99% OBW, CFO, SNR, Baud, 1D-ResNet AMC classification, oscilloscope, spectrogram, constellation).
+  - **Outcome II**: `Outcome2Demodulation.tsx` (FSK, BPSK, QPSK, 16-QAM, 64-QAM with Costas loop phase lock, Mueller-Müller timing recovery, EVM %, and interactive color-coded bit slicer).
+  - **Outcome III**: `Outcome3Deinterleaving.tsx` (Block, Convolutional, Diagonal, Pseudo-Random de-interleavers + automated blind $GF(2)$ rank deficiency period curve $M \in [4, 32]$).
+  - **Outcome IV**: `Outcome4Fec.tsx` (Convolutional Viterbi $K=7$, Reed-Solomon $RS(255, 223)$, Concatenated chain, and IEEE 802.11n LDPC Min-Sum with syndrome check and BER metrics).
+  - **Outcome V**: `Outcome5Correlation.tsx` (Barker-7/11/13, CCSDS ASM `0x1ACFFC1D`, AX.25, and custom sync words, with automated Header vs Payload hex segregation and 3-column synchronized viewer).
+- [x] 11.8 **Interactive Top Navigation & File Uploader (`Navigation.tsx`)**: 5-outcome switcher tabs, golden capture selector, direct `.iq` / `.wav` upload trigger, 3D ribbon toggle, audio drone toggle, and backend health status.
+- [x] 11.9 **Full Verification**: 82/82 pytest tests passing in 8.53s; `pnpm build` bundled with 0 errors in 1.05s.
+
+---
+
+## Next Steps for Continuous Enhancement
+1. **Live SDR Hardware Streaming (Phase 12)**:
+   - Connect RTL-SDR (`pyrtlsdr`) or HackRF via WebSockets for real-time live antenna signal ingestion at up to 2.4 MSps.
+2. **Deep Learning Model Expansion (Phase 13)**:
+   - Add Transformer-based AMC (SignalBERT / RadioTransformer) to benchmark against the current 1D-ResNet model on the RML2016.10a dataset.
+3. **Automated Demux & Protocol Parser (Phase 14)**:
+   - Parse standard payload protocols (IP over AX.25, CCSDS Space Packet Protocol, AIS Marine transponder messages).
+4. **Client-Side WebAssembly (Wasm) Kernel Fallback (Phase 15)**:
+   - Compile Viterbi and GF(2) rank discovery to WebAssembly for zero-latency offline browser execution.
+
 

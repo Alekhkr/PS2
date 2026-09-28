@@ -57,7 +57,6 @@
 - `services/report_service.py`: JSON, CSV, and Markdown audit report generator.
 - `server.py`: High-performance asynchronous FastAPI server providing multi-resolution LOD min-max decimation, I/Q constellation decimation, 2D STFT spectrogram waterfall, hybrid AMC neural extraction, multi-scheme demodulation, GF(2) rank discovery, FEC decoding (Viterbi/RS/Concatenated/LDPC), and bitstream sync correlation. Auto-fallback ensures zero 404s.
 - `frontend/`: Full-stack React 19 + TypeScript + Vite + Three.js + Tailwind v4 RF intelligence workbench:
-  - `components/canvas/CanvasContainer.tsx`: Three.js WebGL 3D Harmonic Tensor Ribbon Wavefield (15 parametric ribbon tubes with spectral chrominance, spatial damping, interactive mouse ripple interference, and 60 FPS lock). Toggleable via `3D WAVE: ON/OFF`.
   - `components/SmoothWaveform.tsx`: Real-time 60 FPS digital storage oscilloscope with dynamic auto-gain normalization, continuous animated live sweep mode (`▶ LIVE SWEEP`), phosphor CRT glow, dual-trace I/Q, timebase zoom presets, and minimap timeline.
   - `components/SpectrogramView.tsx`: Real-time 2D STFT spectrogram waterfall mapped through an authentic Viridis colormap (-80 dB to 0 dB).
   - `components/ConstellationView.tsx`: RMS-normalized I/Q scatter with unit circle, $C_{40}, C_{42}$ cumulants, and EVM % gauge.
@@ -68,7 +67,7 @@
   - `components/outcomes/Outcome5Correlation.tsx`: Dedicated Outcome V workspace for Barker-7/11/13, CCSDS ASM, and AX.25 cross-correlation with automated header/payload segregation, synchronized 3-column hex/bit/ASCII inspector, and rich telemetry demuxing (APRS callsigns, CCSDS APID translation, Shannon entropy, bit balance).
   - `components/ui/AutoSolveModal.tsx`: 1-Click Autonomous End-to-End Pipeline runner (`⚡ AUTO-SOLVE`) with real-time multi-stage visual execution stepper and publication-grade Markdown audit report exporter.
   - `components/streaming/SdrStreamBanner.tsx`: Live bidirectional WebSocket SDR interface featuring 30 Hz streaming, real-time 128-bin FFT spectrum display, RMS/PAPR gauges, and synthetic/replay/hardware mode switching.
-  - `components/ui/Navigation.tsx`: Top navigation bar with 5-outcome tabs, capture ingestion (.IQ/.WAV upload & presets), `⚡ AUTO-SOLVE` button, audio drone toggle, 3D ribbon toggle, and backend status.
+  - `components/ui/Navigation.tsx`: Top navigation bar with 5-outcome tabs, capture ingestion (.IQ/.WAV upload & presets), `⚡ AUTO-SOLVE` button, audio drone toggle, and backend status.
   - `components/ui/OverlayDossier.tsx`: Mathematical formulation and RF architecture dossier modal (key `D`).
 - `signal_lab/streaming/sdr_ws.py`: High-performance FastAPI WebSocket streamer supporting real-time complex IQ synthesis (QPSK, 16QAM, FSK, radar chirp), circular capture replay, and hardware RTL-SDR integration.
 

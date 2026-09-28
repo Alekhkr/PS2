@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Volume2, VolumeX, Upload, Compass, Eye, EyeOff } from 'lucide-react';
+import { Volume2, VolumeX, Upload, Compass, Eye, EyeOff, Zap } from 'lucide-react';
 import type { ExperimentItem } from '../../types';
 
 interface NavigationProps {
@@ -9,6 +9,7 @@ interface NavigationProps {
   currentExpIndex: number;
   onSelectExperiment: (index: number) => void;
   onUploadFile: (file: File) => void;
+  onOpenAutoSolve: () => void;
   isAudioPlaying: boolean;
   onToggleAudio: () => void;
   eqLevels: number[];
@@ -24,6 +25,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   currentExpIndex,
   onSelectExperiment,
   onUploadFile,
+  onOpenAutoSolve,
   isAudioPlaying,
   onToggleAudio,
   eqLevels,
@@ -102,6 +104,16 @@ export const Navigation: React.FC<NavigationProps> = ({
             >
               <Upload className="w-3.5 h-3.5 text-[#00f0ff]" />
               <span className="hidden sm:inline">UPLOAD .IQ / .WAV</span>
+            </button>
+
+            {/* ⚡ AUTO-SOLVE 1-Click Pipeline Button */}
+            <button
+              onClick={onOpenAutoSolve}
+              className="signallab-btn text-[11px] px-3.5 py-1.5 text-white bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 border border-cyan-400/60 shadow-[0_0_12px_rgba(0,240,255,0.35)] font-bold tracking-wide"
+              title="Execute 1-Click Autonomous Multi-Stage Signal Processing Pipeline"
+            >
+              <Zap className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />
+              <span>⚡ AUTO-SOLVE</span>
             </button>
           </div>
 
@@ -184,7 +196,7 @@ export const Navigation: React.FC<NavigationProps> = ({
           <span className="text-slate-600">|</span>
           <span className="hidden sm:inline">CAPTURE: {currentExp.name}</span>
           <span className="text-slate-600 hidden sm:inline">|</span>
-          <span className="text-emerald-400">81/81 DSP KERNELS VALIDATED</span>
+          <span className="text-emerald-400">85/85 DSP KERNELS VALIDATED</span>
         </div>
 
         <div className="flex items-center gap-3">

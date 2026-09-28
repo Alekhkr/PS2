@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
+import numpy as np
 
 from signal_lab.server import app
 
@@ -109,4 +110,80 @@ def test_health_and_session_fallback() -> None:
     assert demod_resp.status_code == 200
     demod_data = demod_resp.json()
     assert "hard_bits_preview" in demod_data
+
+
+def test_demux_and_telemetry_parser() -> None:
+    # 1. AX.25 Demux
+    ax_resp = client.post(
+        "/api/demux/payload",
+        params={"payload_hex": "7222777777777777001A2F4B89CDEFEF55AA", "protocol": "ax25"}
+    )
+    assert ax_resp.status_code == 200
+    ax_data = ax_resp.json()
+    assert "AX.25" in ax_data["protocol"]
+    assert "destination_callsign" in ax_data
+    assert "entropy" in ax_data
+
+    # 2. CCSDS Demux
+    ccsds_resp = client.post(
+        "/api/demux/payload",
+        params={"payload_hex": "0864C0010008DEADBEEFCAFEBA00", "protocol": "ccsds"}
+    )
+    assert ccsds_resp.status_code == 200
+    ccsds_data = ccsds_resp.json()
+    assert "CCSDS" in ccsds_data["protocol"]
+    assert ccsds_data["apid"] == 100
+    assert "Science Instrument" in ccsds_data["apid_description"]
+    assert ccsds_data["packet_type"] == "Telemetry"
+
+
+def test_auto_solve_pipeline_and_report() -> None:
+    # Test 1-click autonomous solve
+    solve_resp = client.post("/api/pipeline/auto-solve")
+    assert solve_resp.status_code == 200
+    solve_data = solve_resp.json()
+    assert solve_data["pipeline_status"] == "COMPLETED"
+    assert "stage_1_parameters" in solve_data
+    assert "stage_2_demodulation" in solve_data
+    assert "stage_3_deinterleaving" in solve_data
+    assert "stage_4_fec" in solve_data
+    assert "stage_5_correlation" in solve_data
+
+    # Test technical audit report export
+    rep_resp = client.get("/api/report/export")
+    assert rep_resp.status_code == 200
+    rep_data = rep_resp.json()
+    assert "markdown" in rep_data
+    assert "SIGNAL LAB" in rep_data["markdown"]
+    assert "Outcome I" in rep_data["markdown"]
+
+
+def test_sdr_streaming_engine() -> None:
+    from signal_lab.streaming.sdr_ws import SDRSourceMode, SDRStreamer
+
+    streamer = SDRStreamer()
+    streamer.mode = SDRSourceMode.SYNTHETIC
+    streamer.mod_type = "QPSK"
+
+    # Test chunk generation
+    chunk = streamer.get_next_chunk(256)
+    assert len(chunk) == 256
+    assert chunk.dtype == np.complex64
+
+    # Test telemetry payload
+    telemetry = streamer.compute_telemetry_payload(chunk)
+    assert "rms_dbfs" in telemetry
+    assert "papr_db" in telemetry
+    assert len(telemetry["i_samples"]) == 128
+    assert len(telemetry["fft_power"]) == 128
+
+    # Test WebSocket endpoint
+    with client.websocket_connect("/ws/sdr") as ws:
+        # Should receive first streaming telemetry frame
+        data = ws.receive_json()
+        assert "timestamp" in data
+        assert "fft_power" in data
+        # Send reconfiguration
+        ws.send_json({"action": "set_source", "source": "synthetic", "mod": "16QAM"})
+
 

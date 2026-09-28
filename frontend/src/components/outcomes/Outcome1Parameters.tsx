@@ -3,6 +3,7 @@ import type { AnalysisResponse, SessionInfo } from '../../types';
 import { SmoothWaveform } from '../SmoothWaveform';
 import { SpectrogramView } from '../SpectrogramView';
 import { ConstellationView } from '../ConstellationView';
+import { SdrStreamBanner } from '../streaming/SdrStreamBanner';
 import { Cpu, Gauge, CheckCircle2, ShieldCheck, RefreshCw } from 'lucide-react';
 
 interface Outcome1ParametersProps {
@@ -61,6 +62,9 @@ export const Outcome1Parameters: React.FC<Outcome1ParametersProps> = ({
           <span>{loadingAnalysis ? 'AUDITING...' : 'RE-RUN BLIND AUDIT'}</span>
         </button>
       </div>
+
+      {/* Live SDR Hardware Streaming & Channel Synthesizer */}
+      <SdrStreamBanner />
 
       {/* Primary Oscilloscope Time-Domain Viewport */}
       <SmoothWaveform

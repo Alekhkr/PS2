@@ -15,6 +15,7 @@ import { HeroSection } from './components/ui/HeroSection';
 import { CuratorialNarrative } from './components/ui/CuratorialNarrative';
 import { MathFormulation } from './components/ui/MathFormulation';
 import { OverlayDossier } from './components/ui/OverlayDossier';
+import { AutoSolveModal } from './components/ui/AutoSolveModal';
 import { Outcome1Parameters } from './components/outcomes/Outcome1Parameters';
 import { Outcome2Demodulation } from './components/outcomes/Outcome2Demodulation';
 import { Outcome3Deinterleaving } from './components/outcomes/Outcome3Deinterleaving';
@@ -25,6 +26,7 @@ export const App: React.FC = () => {
   const [isPreloaderComplete, setIsPreloaderComplete] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
+  const [isAutoSolveOpen, setIsAutoSolveOpen] = useState(false);
   const [is3dActive, setIs3dActive] = useState(true);
 
   // Active Outcome Tab (0 to 4)
@@ -115,6 +117,7 @@ export const App: React.FC = () => {
         toggleAudio();
       } else if (e.key === 'Escape') {
         setIsDossierOpen(false);
+        setIsAutoSolveOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -158,6 +161,7 @@ export const App: React.FC = () => {
         currentExpIndex={currentExpIndex}
         onSelectExperiment={loadExperimentByIndex}
         onUploadFile={handleUploadFile}
+        onOpenAutoSolve={() => setIsAutoSolveOpen(true)}
         isAudioPlaying={isAudioPlaying}
         onToggleAudio={toggleAudio}
         eqLevels={eqLevels}
@@ -175,6 +179,7 @@ export const App: React.FC = () => {
             setActiveTab(tab);
             scrollToWorkbench();
           }}
+          onOpenAutoSolve={() => setIsAutoSolveOpen(true)}
         />
 
         {/* Section 2: Dedicated 5-Outcome Workbench Workspace */}
@@ -270,7 +275,7 @@ export const App: React.FC = () => {
           <div className="flex items-center gap-6 text-[11px] text-slate-400">
             <span>FASTAPI SERVER: ONLINE</span>
             <span>PYTORCH + AVX2: READY</span>
-            <span>81/81 AUDIT TESTS: PASSING</span>
+            <span>85/85 AUDIT TESTS: PASSING</span>
           </div>
         </footer>
       </main>
@@ -279,6 +284,18 @@ export const App: React.FC = () => {
       <OverlayDossier
         isOpen={isDossierOpen}
         onClose={() => setIsDossierOpen(false)}
+      />
+
+      {/* 6. Autonomous End-to-End Pipeline Auto-Solve Modal */}
+      <AutoSolveModal
+        isOpen={isAutoSolveOpen}
+        onClose={() => setIsAutoSolveOpen(false)}
+        sessionId={session?.session_id || null}
+        onJumpToStage={(stageIdx) => {
+          setActiveTab(stageIdx);
+          setIsAutoSolveOpen(false);
+          scrollToWorkbench();
+        }}
       />
     </div>
   );

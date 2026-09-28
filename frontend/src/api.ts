@@ -179,3 +179,31 @@ export async function uploadSignalFile(file: File): Promise<SessionInfo> {
   if (!res.ok) throw new Error(`File upload failed: ${res.statusText}`);
   return res.json();
 }
+
+export async function runAutoSolve(sessionId?: string): Promise<any> {
+  const url = sessionId
+    ? `${BASE_URL}/api/pipeline/auto-solve?session_id=${encodeURIComponent(sessionId)}`
+    : `${BASE_URL}/api/pipeline/auto-solve`;
+  const res = await fetch(url, { method: 'POST' });
+  if (!res.ok) throw new Error(`Auto-solve failed: ${res.statusText}`);
+  return res.json();
+}
+
+export async function fetchTechnicalReport(sessionId?: string): Promise<{ session_id: string; markdown: string; pipeline_data: any }> {
+  const url = sessionId
+    ? `${BASE_URL}/api/report/export?session_id=${encodeURIComponent(sessionId)}`
+    : `${BASE_URL}/api/report/export`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Report export failed: ${res.statusText}`);
+  return res.json();
+}
+
+export async function demuxPayload(payloadHex: string, protocol: string = 'auto'): Promise<any> {
+  const params = new URLSearchParams({
+    payload_hex: payloadHex,
+    protocol,
+  });
+  const res = await fetch(`${BASE_URL}/api/demux/payload?${params.toString()}`, { method: 'POST' });
+  if (!res.ok) throw new Error(`Payload demux failed: ${res.statusText}`);
+  return res.json();
+}

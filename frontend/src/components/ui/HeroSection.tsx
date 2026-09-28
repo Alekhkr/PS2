@@ -1,15 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { ArrowDown, Activity, Cpu, Layers, ShieldCheck, Binary } from 'lucide-react';
+import { ArrowDown, Activity, Cpu, Layers, ShieldCheck, Binary, Zap } from 'lucide-react';
 
 interface HeroSectionProps {
   onEnterWorkbench: () => void;
   onSelectTab: (tabIndex: number) => void;
+  onOpenAutoSolve?: () => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onEnterWorkbench,
   onSelectTab,
+  onOpenAutoSolve,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const tagRef = useRef<HTMLDivElement>(null);
@@ -116,8 +118,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             })}
           </div>
 
-          {/* Enter Workbench CTA */}
-          <div className="pt-4 flex items-center gap-4">
+          {/* Enter Workbench & Auto-Solve CTAs */}
+          <div className="pt-4 flex flex-wrap items-center gap-4">
             <button
               onClick={onEnterWorkbench}
               className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#00f0ff] hover:bg-cyan-300 text-black font-sans font-bold text-sm tracking-wide transition shadow-[0_0_25px_rgba(0,240,255,0.4)]"
@@ -125,8 +127,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               <span>LAUNCH SIGNAL LAB WORKBENCH</span>
               <ArrowDown className="w-4 h-4" />
             </button>
-            <span className="text-xs font-mono text-slate-500">
-              [Click to jump to live oscilloscope & diagnostics]
+
+            {onOpenAutoSolve && (
+              <button
+                onClick={onOpenAutoSolve}
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 border border-cyan-400 text-white font-sans font-bold text-sm tracking-wide transition shadow-[0_0_25px_rgba(0,240,255,0.35)]"
+              >
+                <Zap className="w-4 h-4 text-yellow-300 fill-yellow-300" />
+                <span>⚡ 1-CLICK AUTO-SOLVE PIPELINE</span>
+              </button>
+            )}
+
+            <span className="text-xs font-mono text-slate-500 hidden sm:inline">
+              [Autonomous end-to-end signal intelligence]
             </span>
           </div>
         </div>

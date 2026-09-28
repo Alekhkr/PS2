@@ -1,12 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 :root {
-  --bg-void: #03070d;
-  --bg-card: rgba(8, 17, 30, 0.85);
-  --bg-card-hover: rgba(14, 28, 48, 0.95);
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-active: rgba(0, 240, 255, 0.4);
+  --bg-void: #030712;
+  --bg-card: #090e1a;
+  --bg-card-hover: #0c1424;
+  --border-subtle: rgba(255, 255, 255, 0.1);
+  --border-active: rgba(0, 240, 255, 0.45);
 
   --neon-cyan: #00f0ff;
   --neon-violet: #a855f7;
@@ -14,7 +14,7 @@
   --neon-amber: #f59e0b;
   --neon-crimson: #ef4444;
 
-  --text-main: #f8fafc;
+  --text-main: #ffffff;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
 
@@ -30,7 +30,9 @@
 }
 
 body {
-  background-color: #03070d;
+  background-color: #030712;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 0);
+  background-size: 24px 24px;
   color: var(--text-main);
   font-family: var(--font-sans);
   overflow-x: hidden;
@@ -39,36 +41,34 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* Custom Scrollbars */
+/* Custom High-Contrast Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(3, 7, 13, 0.9);
+  background: #030712;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--neon-cyan);
 }
 
-/* Glassmorphic Panel Styles */
-.signallab-panel, .austensor-panel {
-  background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+/* High-Contrast Opaque Laboratory Panel */
+.signallab-panel {
+  background: #090e1a;
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.65);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.signallab-panel:hover, .austensor-panel:hover {
+.signallab-panel:hover {
   border-color: var(--border-active);
-  box-shadow: 0 12px 36px rgba(0, 240, 255, 0.08);
+  box-shadow: 0 6px 24px rgba(0, 240, 255, 0.08);
 }
 
 /* Pulsing Badge Indicator */
@@ -103,12 +103,12 @@ body {
   transition: height 0.08s ease;
 }
 
-/* Grid Background Lines for Panels */
+/* Grid Lines for Inner Diagnostic Canvases */
 .grid-lines {
   background-size: 24px 24px;
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
 }
 
 /* Button Reset & Styling */
@@ -121,7 +121,7 @@ button {
   outline: none;
 }
 
-.signallab-btn, .austensor-btn {
+.signallab-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -131,21 +131,21 @@ button {
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.03em;
-  background: rgba(255, 255, 255, 0.05);
+  background: #0c1424;
   border: 1px solid var(--border-subtle);
   color: var(--text-main);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.signallab-btn:hover, .austensor-btn:hover {
-  background: rgba(0, 240, 255, 0.12);
+.signallab-btn:hover {
+  background: rgba(0, 240, 255, 0.15);
   border-color: var(--neon-cyan);
   color: #fff;
   box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
 }
 
-.signallab-btn.active, .austensor-btn.active {
-  background: rgba(0, 240, 255, 0.18);
+.signallab-btn.active {
+  background: rgba(0, 240, 255, 0.2);
   border-color: var(--neon-cyan);
   color: var(--neon-cyan);
   box-shadow: 0 0 16px rgba(0, 240, 255, 0.35);
@@ -163,26 +163,26 @@ button {
   font-weight: 500;
   letter-spacing: 0.02em;
   color: var(--text-muted);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0b1120;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.2s ease;
 }
 
 .outcome-tab-btn:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: #111b33;
+  border-color: rgba(255, 255, 255, 0.25);
 }
 
 .outcome-tab-btn.active {
   color: #000000;
   background: var(--neon-cyan);
   border-color: var(--neon-cyan);
-  font-weight: 600;
+  font-weight: 700;
   box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
 }
 
-/* Scanline Overlay (Austensor CRT / Scope Feel) */
+/* Scanline Overlay for Oscilloscope Viewports */
 .scanlines {
   position: relative;
 }
@@ -195,5 +195,5 @@ button {
   background-size: 100% 4px;
   z-index: 2;
   pointer-events: none;
-  opacity: 0.6;
+  opacity: 0.4;
 }

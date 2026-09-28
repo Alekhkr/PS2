@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Volume2, VolumeX, Upload, Compass, Eye, EyeOff, Zap } from 'lucide-react';
+import { Volume2, VolumeX, Upload, Compass, Zap } from 'lucide-react';
 import type { ExperimentItem } from '../../types';
 
 interface NavigationProps {
@@ -14,8 +14,6 @@ interface NavigationProps {
   onToggleAudio: () => void;
   eqLevels: number[];
   onOpenDossier: () => void;
-  is3dActive: boolean;
-  onToggle3d: () => void;
 }
 
 export const Navigation: React.FC<NavigationProps> = ({
@@ -30,8 +28,6 @@ export const Navigation: React.FC<NavigationProps> = ({
   onToggleAudio,
   eqLevels,
   onOpenDossier,
-  is3dActive,
-  onToggle3d,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -57,7 +53,7 @@ export const Navigation: React.FC<NavigationProps> = ({
   return (
     <>
       {/* Top Floating App Bar */}
-      <header className="fixed top-0 left-0 right-0 z-40 px-4 md:px-8 py-3 bg-[#03070d]/90 backdrop-blur-xl border-b border-white/[0.08] flex flex-col gap-2.5 select-none shadow-2xl">
+      <header className="fixed top-0 left-0 right-0 z-40 px-4 md:px-8 py-3 bg-[#050a15] border-b border-white/10 flex flex-col gap-2.5 select-none shadow-2xl">
         <div className="flex items-center justify-between gap-4">
           {/* Left: Brand Identity & Capture Selector */}
           <div className="flex items-center gap-4">
@@ -119,15 +115,6 @@ export const Navigation: React.FC<NavigationProps> = ({
 
           {/* Right Action Cluster */}
           <div className="flex items-center gap-2.5">
-            {/* 3D Wave Ribbon Toggle */}
-            <button
-              onClick={onToggle3d}
-              className={`signallab-btn text-[11px] px-3 py-1.5 ${is3dActive ? 'active text-[#00f0ff]' : 'text-slate-400'}`}
-              title="Toggle 3D Harmonic Wave Ribbon Background"
-            >
-              {is3dActive ? <Eye className="w-3.5 h-3.5 text-[#00f0ff]" /> : <EyeOff className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">3D WAVE: {is3dActive ? 'ON' : 'OFF'}</span>
-            </button>
 
             {/* Audio Harmonic Phase Toggle */}
             <button

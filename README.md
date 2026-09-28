@@ -13,3 +13,29 @@ A high-precision desktop scientific instrument built with PySide6 and PyQtGraph 
 - Interleaver and FEC hypothesis testing engines (Viterbi, Reed-Solomon, LDPC).
 - Bitstream correlation and frame detection.
 - Full provenance and audit trail for every measured parameter via `ParameterEvidence`.
+
+## Quick Start: Running Frontend & Backend
+
+### 1. Backend Server (FastAPI + DSP Engine)
+```bash
+# Direct ASGI launch:
+uvicorn app:main --reload --port 8000
+
+# Or via Python runner:
+python main.py
+```
+- **Backend API**: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+- **Interactive Swagger Docs**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+- **Health Endpoint**: [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health)
+
+### 2. Frontend Application (React 19 + TypeScript + Three.js)
+```bash
+cd frontend
+pnpm dev --port 5173
+```
+- **Interactive Workbench**: [http://127.0.0.1:5173](http://127.0.0.1:5173)
+
+### 3. Native Desktop GUI (PySide6 / Qt)
+```bash
+python -m signal_lab.gui
+```

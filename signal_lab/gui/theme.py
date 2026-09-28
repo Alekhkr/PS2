@@ -6,31 +6,39 @@ from PySide6.QtGui import QFont
 
 
 class ScientificPalette:
-    """Awwwards-level restrained dark scientific instrument color palette."""
+    """Awwwards-level restrained dark scientific instrument color palette with Austensor obsidian aesthetics."""
 
-    # Surfaces
-    BG_BASE = "#090B0E"  # Deep near-black graphite
-    BG_SURFACE = "#12151B"  # Panel surface
-    BG_CARD = "#181D25"  # Active card / container
-    BG_HOVER = "#202632"  # Interactive hover state
-    BG_ACTIVE = "#28303F"  # Pressed / active state
+    # Obsidian & Carbon Surfaces (Austensor benchmark)
+    BG_BASE = "#030508"  # True obsidian canvas
+    BG_SURFACE = "#090D15"  # Deep panel surface
+    BG_CARD = "#0F1420"  # Frosted card container
+    BG_CARD_TRANSLUCENT = "rgba(15, 20, 32, 0.75)"
+    BG_HOVER = "#182030"  # Interactive hover state
+    BG_ACTIVE = "#222D42"  # Pressed / active state
 
-    # Borders & Dividers
-    BORDER_SUBTLE = "#1C222C"
-    BORDER_STRONG = "#2B3444"
-    BORDER_FOCUS = "#00E5FF"
+    # Hairline Borders & Dividers
+    BORDER_SUBTLE = "#161E2E"
+    BORDER_STRONG = "#253248"
+    BORDER_HAIRLINE = "#1A2332"
+    BORDER_GOLD = "#6B581B"
+    BORDER_FOCUS = "#00F0FF"
 
     # Text
-    TEXT_PRIMARY = "#F2F5F8"  # Crisp readable white
-    TEXT_SECONDARY = "#8B98A9"  # Muted technical gray
-    TEXT_MUTED = "#556375"  # Subtle hints / units
+    TEXT_PRIMARY = "#F4F7FB"  # Crisp readable white
+    TEXT_SECONDARY = "#8E9EAF"  # Muted technical slate
+    TEXT_MUTED = "#60718A"  # Monospace micro tags and plot axes (Austensor style)
 
-    # Accents & Semantics
-    ACCENT_CYAN = "#00E5FF"  # Primary electric cyan
+    # Austensor & Scientific Accents
+    ACCENT_GOLD = "#D4AF37"  # Golden ratio (phi = 1.618) & curatorial accent
+    ACCENT_AMBER = "#FFB300"  # Warning / active beacon
+    ACCENT_CYAN = "#00F0FF"  # High-energy electric signal cyan
     ACCENT_BLUE = "#0A84FF"  # Secondary data blue
-    ACCENT_AMBER = "#FF9F0A"  # Restrained warning amber
-    ACCENT_RED = "#FF453A"  # Crisp error red
+    ACCENT_RED = "#FF453A"  # Error / out-of-band red
     ACCENT_GREEN = "#30D158"  # Verified / converged green
+
+
+AustensorPalette = ScientificPalette
+
 
 
 def get_monospace_font(point_size: int = 10, weight: QFont.Weight = QFont.Weight.Normal) -> QFont:
@@ -101,13 +109,57 @@ QPushButton:disabled {{
 
 /* Primary Action Accent Button */
 QPushButton[primary="true"] {{
-    background-color: #004D5A;
+    background-color: #003B45;
     color: {ScientificPalette.ACCENT_CYAN};
     border: 1px solid {ScientificPalette.ACCENT_CYAN};
+    border-radius: 6px;
+    padding: 7px 16px;
 }}
 QPushButton[primary="true"]:hover {{
-    background-color: #006070;
+    background-color: #005666;
+    border-color: #33F5FF;
 }}
+
+/* Austensor Imperial Gold Accent Button */
+QPushButton[gold="true"] {{
+    background-color: rgba(212, 175, 55, 0.12);
+    color: {ScientificPalette.ACCENT_GOLD};
+    border: 1px solid {ScientificPalette.ACCENT_GOLD};
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-weight: 600;
+}}
+QPushButton[gold="true"]:hover {{
+    background-color: rgba(212, 175, 55, 0.25);
+    color: #FFE58F;
+}}
+
+/* Austensor Floating Experiment Dock Pill */
+QPushButton[dockItem="true"] {{
+    background-color: rgba(255, 255, 255, 0.04);
+    color: {ScientificPalette.TEXT_PRIMARY};
+    border: 1px solid {ScientificPalette.BORDER_HAIRLINE};
+    border-radius: 18px;
+    padding: 4px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+}}
+QPushButton[dockItem="true"]:hover {{
+    background-color: rgba(255, 255, 255, 0.10);
+    border-color: {ScientificPalette.ACCENT_GOLD};
+    color: {ScientificPalette.ACCENT_GOLD};
+}}
+
+/* Frosted Glass Cards */
+QFrame[glassCard="true"] {{
+    background-color: {ScientificPalette.BG_CARD};
+    border: 1px solid {ScientificPalette.BORDER_HAIRLINE};
+    border-radius: 12px;
+}}
+QFrame[glassCard="true"]:hover {{
+    border-color: {ScientificPalette.BORDER_STRONG};
+}}
+
 
 /* Progress Bar */
 QProgressBar {{

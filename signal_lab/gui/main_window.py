@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Slot
+from PySide6.QtCore import Qt, Slot
 from PySide6.QtWidgets import (
     QFileDialog,
     QMainWindow,
@@ -20,6 +20,7 @@ from signal_lab.domain.models.session import Session
 from signal_lab.domain.models.signal import SignalSegment
 from signal_lab.gui.theme import DARK_SCIENTIFIC_QSS
 from signal_lab.gui.widgets.analysis_workspace import AnalysisWorkspaceWidget
+from signal_lab.gui.widgets.dossier_dialog import ScientificDossierDialog
 from signal_lab.gui.widgets.drop_zone import DropZoneWidget
 from signal_lab.gui.widgets.header_bar import HeaderBar
 from signal_lab.gui.widgets.pipeline_status import PipelineStatusWidget
@@ -203,3 +204,11 @@ class MainWindow(QMainWindow):
                 self.report_service.export_csv(self._active_session.id, p)
             else:
                 self.report_service.export_json(self._active_session.id, p)
+
+    def keyPressEvent(self, event) -> None:
+        if event.key() == Qt.Key.Key_D:
+            dialog = ScientificDossierDialog(self)
+            dialog.exec()
+        else:
+            super().keyPressEvent(event)
+

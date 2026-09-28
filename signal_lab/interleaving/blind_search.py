@@ -134,3 +134,67 @@ class BlindInterleaverAnalyzer:
 
         results = sorted(dedup.values(), key=lambda c: c.confidence, reverse=True)
         return results
+
+
+@dataclass
+class ConvolutionalInterleaverCandidate:
+    """Detected candidate convolutional interleaver (Forney/Ramsey) structure."""
+
+    branches: int  # Number of shift register delay branches B
+    base_delay: int  # Delay step multiplier M
+    period: int  # Effective period B * M
+    confidence: float
+    score: float
+
+
+def blind_convolutional_interleaver_search(
+    bits: np.ndarray,
+    min_branches: int = 2,
+    max_branches: int = 16,
+    max_delay: int = 8,
+) -> list[ConvolutionalInterleaverCandidate]:
+    """Blind search for Forney/Ramsey convolutional interleaver parameters (B, M).
+
+    Analyzes periodic auto-correlation of symbol transition sequences and
+    cyclic branch variance.
+    """
+    hard_bits = (bits > 0).astype(np.int8)
+    n = len(hard_bits)
+    if n < max_branches * max_delay * 8:
+        return []
+
+    # Map bits to bipolar {-1, +1}
+    bipolar = 2 * hard_bits.astype(np.float32) - 1.0
+    candidates: list[ConvolutionalInterleaverCandidate] = []
+
+    # Fast autocorrelation across candidate periods B * M
+    max_lag = max_branches * max_delay + 2
+    autocorr = np.zeros(max_lag, dtype=np.float32)
+    for lag in range(1, max_lag):
+        autocorr[lag] = np.mean(bipolar[:-lag] * bipolar[lag:])
+
+    for b in range(min_branches, max_branches + 1):
+        for m in range(1, max_delay + 1):
+            period = b * m
+            if period < max_lag:
+                corr_peak = float(abs(autocorr[period]))
+                # Check harmonic at 2 * period
+                harmonic = float(abs(autocorr[2 * period])) if 2 * period < max_lag else 0.0
+
+                score = corr_peak + 0.5 * harmonic
+                if score > 0.08:
+                    conf = min(0.92, float(score * 2.5))
+                    candidates.append(
+                        ConvolutionalInterleaverCandidate(
+                            branches=b,
+                            base_delay=m,
+                            period=period,
+                            confidence=conf,
+                            score=score,
+                        )
+                    )
+
+    # Sort descending by confidence
+    candidates.sort(key=lambda c: c.confidence, reverse=True)
+    return candidates
+

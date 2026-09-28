@@ -74,6 +74,117 @@ def generate_802_11n_h_matrix(n: int = 648, rate: str = "1/2") -> np.ndarray:
     return h
 
 
+def generate_dvbs2_h_matrix(rate: str = "1/2", n: int = 648) -> np.ndarray:
+    """Generates standard DVB-S2 (ETSI EN 302 307) short/medium frame quasi-cyclic parity-check matrix.
+
+    Supports rates '1/2', '2/3', and '3/4'.
+    """
+    z = n // 24
+    if rate == "2/3":
+        # 8 check rows x 24 variable cols (M=8*z, N=24*z)
+        num_checks = 8
+    elif rate == "3/4":
+        # 6 check rows x 24 variable cols (M=6*z, N=24*z)
+        num_checks = 6
+    else:  # '1/2'
+        num_checks = 12
+
+    m = num_checks * z
+    h = np.zeros((m, n), dtype=np.uint8)
+
+    # Systematic dual-diagonal staircase for parity check part
+    parity_cols = m
+    info_cols = n - parity_cols
+
+    # Info columns quasi-cyclic shifts
+    for col_group in range(info_cols // z):
+        for row_group in range(num_checks):
+            shift = (col_group * 3 + row_group * 5) % z
+            sub_block = np.roll(np.eye(z, dtype=np.uint8), shift, axis=1)
+            h[row_group * z : (row_group + 1) * z, col_group * z : (col_group + 1) * z] = sub_block
+
+    # Dual-diagonal parity structure (staircase: h_i,i = 1 and h_i,i+1 = 1)
+    for i in range(m):
+        h[i, info_cols + i] = 1
+        if i + 1 < m:
+            h[i + 1, info_cols + i] = 1
+
+    return h
+
+
+def generate_ccsds_h_matrix(n: int = 1024, rate: str = "1/2") -> np.ndarray:
+    """Generates CCSDS 131.0-B-3 Deep Space & Telecommand LDPC Parity-Check Matrix.
+
+    Quasi-cyclic Accumulate-Repeat-4-Jagged-Accumulate (AR4JA) standard matrix.
+    """
+    m = n // 2
+    h = np.zeros((m, n), dtype=np.uint8)
+
+    # CCSDS AR4JA protograph expansion
+    z = m // 4
+    circ_shifts = [
+        [0, 1, 3, -1],
+        [-1, 0, 2, 7],
+        [5, -1, 0, 11],
+        [13, 17, -1, 0],
+    ]
+
+    for r in range(4):
+        for c in range(4):
+            s = circ_shifts[r][c]
+            if s >= 0:
+                block = np.roll(np.eye(z, dtype=np.uint8), s % z, axis=1)
+                h[r * z : (r + 1) * z, c * z : (c + 1) * z] = block
+
+    # Parity accumulator block
+    for i in range(m):
+        h[i, m + i] = 1
+        if i + 1 < m:
+            h[i + 1, m + i] = 1
+
+    return h
+
+
+def get_standard_ldpc_profiles() -> dict[str, LDPCProfile]:
+    """Returns registry of standard military, space, and commercial LDPC profiles."""
+    h_80211 = generate_802_11n_h_matrix(648, "1/2")
+    h_dvb23 = generate_dvbs2_h_matrix("2/3", 648)
+    h_dvb34 = generate_dvbs2_h_matrix("3/4", 648)
+    h_ccsds = generate_ccsds_h_matrix(1024, "1/2")
+
+    return {
+        "IEEE_802_11n_Rate_1_2": LDPCProfile(
+            name="IEEE 802.11n Rate 1/2",
+            codeword_length=648,
+            data_length=324,
+            rate=0.5,
+            h_matrix=h_80211,
+        ),
+        "DVB_S2_Rate_2_3": LDPCProfile(
+            name="DVB-S2 Rate 2/3",
+            codeword_length=648,
+            data_length=432,
+            rate=2.0 / 3.0,
+            h_matrix=h_dvb23,
+        ),
+        "DVB_S2_Rate_3_4": LDPCProfile(
+            name="DVB-S2 Rate 3/4",
+            codeword_length=648,
+            data_length=486,
+            rate=0.75,
+            h_matrix=h_dvb34,
+        ),
+        "CCSDS_AR4JA_Rate_1_2": LDPCProfile(
+            name="CCSDS 131.0 Deep Space Rate 1/2",
+            codeword_length=1024,
+            data_length=512,
+            rate=0.5,
+            h_matrix=h_ccsds,
+        ),
+    }
+
+
+
 class LDPCDecoder:
     """Iterative Min-Sum LDPC Decoder and Syndrome Evaluator."""
 

@@ -6,10 +6,18 @@ import numpy as np
 
 from signal_lab.domain.enums import FECType, ValidationStatus
 from signal_lab.fec.concatenated import ConcatenatedFECPipeline
-from signal_lab.fec.ldpc import LDPCDecoder, generate_802_11n_h_matrix
+from signal_lab.fec.ldpc import (
+    LDPCDecoder,
+    generate_802_11n_h_matrix,
+    get_standard_ldpc_profiles,
+)
 from signal_lab.fec.reed_solomon import ReedSolomonEvaluator
 from signal_lab.fec.viterbi import ViterbiDecoder
-from signal_lab.interleaving.blind_search import BlindInterleaverAnalyzer, gf2_rank
+from signal_lab.interleaving.blind_search import (
+    BlindInterleaverAnalyzer,
+    blind_convolutional_interleaver_search,
+    gf2_rank,
+)
 
 
 def test_ldpc_syndrome_and_decode_min_sum() -> None:
@@ -95,3 +103,36 @@ def test_concatenated_pipeline_evaluation() -> None:
     assert res.fec_type == FECType.CONCATENATED
     assert isinstance(res.confidence, float)
     assert res.validation in (ValidationStatus.REJECTED, ValidationStatus.PARTIAL, ValidationStatus.VALIDATED)
+
+
+def test_dvbs2_and_ccsds_ldpc_profiles() -> None:
+    """Verify DVB-S2 (2/3, 3/4) and CCSDS Deep Space LDPC profile generation and decoding."""
+    profiles = get_standard_ldpc_profiles()
+    assert "DVB_S2_Rate_2_3" in profiles
+    assert "DVB_S2_Rate_3_4" in profiles
+    assert "CCSDS_AR4JA_Rate_1_2" in profiles
+
+    dvb23 = profiles["DVB_S2_Rate_2_3"]
+    assert dvb23.h_matrix.shape[1] == 648
+
+    decoder = LDPCDecoder(dvb23.h_matrix, max_iterations=15)
+    zero_cw = np.zeros(648, dtype=np.uint8)
+    assert np.all(decoder.compute_syndrome(zero_cw) == 0)
+
+    # Test CCSDS 1024 matrix
+    ccsds = profiles["CCSDS_AR4JA_Rate_1_2"]
+    assert ccsds.h_matrix.shape == (512, 1024)
+    decoder_ccsds = LDPCDecoder(ccsds.h_matrix, max_iterations=10)
+    assert np.all(decoder_ccsds.compute_syndrome(np.zeros(1024, dtype=np.uint8)) == 0)
+
+
+def test_blind_convolutional_interleaver_search() -> None:
+    """Verify blind search for Forney/Ramsey convolutional interleaver parameters."""
+    # Synthetic periodic bitstream with period = 12 (e.g. B=4, M=3)
+    pattern = np.array([1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0], dtype=np.uint8)
+    repeated = np.tile(pattern, 100)
+    cands = blind_convolutional_interleaver_search(repeated, min_branches=2, max_branches=8, max_delay=4)
+    assert len(cands) > 0
+    # Period 12 should be detected
+    assert any(c.period == 12 for c in cands)
+

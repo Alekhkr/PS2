@@ -110,67 +110,91 @@
 ```
 
 ### Visual Layout & Formatting:
-- **Left Panel (25% width):** Technical Specifications, Languages, Libraries, Models, and Prototype Video Thumbnail.
-- **Center & Right Canvas (75% width):** High-Impact End-to-End System Architecture Flowchart with clear data pipelines and feedback loops.
+- **Left Panel (25% width):** Technical Specifications, Languages, Libraries, Models, and Prototype Demo Video / UI thumbnail.
+- **Center & Right Canvas (75% width):** Compact, high-impact block diagram mirroring the reference slide layout:
+  - Top: Ingestion & Streaming Gateway
+  - Center: Dual Parallel Engines (DSP Physics & Neural AMC) -> Fusion & Demod -> Protocol Stack
+  - Right: Operator Instrumentation & Automated Audit Reports
+  - Bottom Banner: Sub-50ms Dynamic Loop
 
 ---
 
 ### Left Panel: Tech Stack & System Specifications
+*(Compact sidebar with logo icons)*
 
+- **Prototype Demo Video:**
+  - `[Thumbnail/Mockup]` Live 60 FPS Qt UI demo callout
 - **Programming Languages:**
-  - Python 3.12+ (Core Architecture & Orchestration)
-  - Modern C++20 (SIMD-accelerated DSP kernels via PyBind11)
-- **AI & Neural Models:**
-  - `ModulationResNet1D` (Lightweight 1D Residual CNN, 696 KB weights, sub-2ms CPU inference)
-  - Trained on `RadioMod-R16` across 16 modulations (BPSK to 64QAM, FSK, MSK, GMSK)
-- **GUI & Visualization:**
-  - PySide6 (Qt for Python 6.11)
-  - PyQtGraph (60 FPS GPU-accelerated waterfall, spectrum, and waveform instruments)
-- **DSP & Mathematics:**
-  - NumPy, SciPy (Welch PSD, Hilbert analytic transform, polyphase resampler)
-- **Persistence & Metadata:**
-  - SQLite3 (WAL mode non-blocking session history)
-  - Native SigMF v1.0.0 Engine (`.sigmf-meta` + `.sigmf-data`)
-- **Prototype Demo Video Callout:**
-  - Live Desktop Demo: "Signal Lab v0.1.0 — 72/72 Unit/Integration Tests Passing (2.40s)".
+  - Python 3.12+ (Pipeline & UI)
+  - Modern C++20 (SIMD DSP Kernels via PyBind11)
+- **Neural & Math Models:**
+  - `ModulationResNet1D` (16 Classes, 696 KB weights, sub-2ms)
+  - Hybrid Decision Fusion ($C_{40}, C_{42}, \sigma_{|s|}^2$)
+- **Database & Storage:**
+  - SQLite3 WAL (Zero-lock session history)
+- **GUI & Standards:**
+  - PySide6 + PyQtGraph (60 FPS GPU-accelerated)
+  - SigMF v1.0.0 (`.sigmf-meta` / `.sigmf-data`)
 
 ---
 
-### Center & Right Canvas: Architecture & Processing Data Flow
+### Center & Right Canvas: Compact Architecture Flowchart
+*(Short 2–4 word chip labels designed specifically to fit on a single presentation slide without clutter)*
 
 ```mermaid
-flowchart TD
-    subgraph S1["1. INGESTION & ZERO-COPY STREAMING"]
-        IN1["Heterogeneous Captures\n(.IQ, .WAV, SigMF)"] --> IN2["Streaming Gateway\n(Format Normalizer)"]
-        IN2 --> MM["Zero-Copy Memory Map\n(StreamingSignalBuffer <100MB RAM)"]
-        IN2 --> AD["Interactive Assumptions Dialog\n(Live Miniature Welch PSD Preview)"]
+flowchart LR
+    subgraph INGEST["1. INGESTION"]
+        direction TB
+        RF["RF Inputs\n(.IQ / .WAV / SigMF)"] --> GW["Streaming Gateway\n(Zero-Copy memmap)"]
+        GW --> COND["DSP Conditioning\n(DC & IQ Balance)"]
     end
 
-    subgraph S2["2. DUAL FEATURE EXTRACTION ENGINE"]
-        MM --> DSP_ENG["DSP Physics Engine\n- DC Offset & IQ Imbalance Correction\n- Sub-bin Quadratic Carrier Estimator\n- 99% Cumulative Occupied Bandwidth\n- Cyclostationary Baud Rate Search\n- STFT Energy Burst Detector"]
-        MM --> NEU_ENG["Neural AMC Engine (ResNet-1D)\n- Input Tensor: (Batch, 2, 512)\n- 3 Residual Stages + BatchNorm\n- Softmax Probabilities across 16 Classes\n- Trained on RadioMod-R16"]
+    subgraph DUAL["2. DUAL FEATURE ENGINES"]
+        direction TB
+        DSP["DSP Physics Engine\n• Sub-bin Carrier\n• 99% OBW\n• Baud Rate\n• Energy VAD"]
+        AMC["Neural AMC Engine\n• ResNet-1D (16 Mods)\n• Cumulants (C40, C42)\n• Envelope Variance\n• <2ms Inference"]
     end
 
-    subgraph S3["3. HYBRID DECISION FUSION & PROVENANCE"]
-        DSP_ENG --> FUSION["Hybrid Evidence Fusion Engine\n- Higher-Order Cumulants (C40, C42)\n- Envelope Variance (Const. vs Multi-level)\n- Cross-Validation: Penalizes Inconsistencies\n- Calibrated Confidence Score (0.0 - 1.0)"]
-        NEU_ENG --> FUSION
+    subgraph SYNC_DEMOD["3. FUSION & DEMOD"]
+        direction TB
+        FUS["Evidence Fusion\n(0.0 - 1.0 Conf)"]
+        DEM["Sync & Demod\n• Costas Loop\n• Mueller-Müller\n• BPSK to 64QAM"]
+        FUS --> DEM
     end
 
-    subgraph S4["4. SYNCHRONIZATION & DEMODULATION"]
-        FUSION --> SYNC["Carrier & Symbol Sync\n- 2nd-Order Costas Loop (Phase/Freq)\n- Mueller-Müller Timing Error Detector"]
-        SYNC --> DEMOD["Multi-Modulation Demodulator\n- BPSK, QPSK, 8PSK, 16QAM, 64QAM, FSK\n- EVM % Calculation & Soft LLR Extraction"]
+    subgraph PROTO["4. PROTOCOL STACK"]
+        direction TB
+        INT["Blind Interleaver\n(GF(2) Rank Defect)"]
+        FEC["FEC Decoders\n• Viterbi (K=7)\n• Reed-Solomon\n• LDPC Min-Sum"]
+        INT --> FEC
     end
 
-    subgraph S5["5. PROTOCOL RECONSTRUCTION (FEC & INTERLEAVING)"]
-        DEMOD --> BLIND_INT["Blind Interleaver Discovery\n- GF(2) Matrix Rank Deficiency\n- Transition Auto-Correlation Peaks\n- Reverses Block / Convolutional Permutations"]
-        BLIND_INT --> FEC_DEC["Multi-Scheme FEC Decoding\n- Viterbi Convolutional Decoder (K=7, Rate 1/2)\n- Reed-Solomon GF(2^8) Evaluator\n- LDPC Iterative Min-Sum Belief Propagation\n- Concatenated FEC Pipeline"]
+    subgraph OUT["5. OPERATOR SUITE"]
+        direction TB
+        DASH["4-Plot Instruments\n(Waterfall, PSD, IQ)"]
+        BIT["Bitstream Inspector\n(Click-to-Waveform)"]
+        REP["Audit Report\n(PDF / JSON / SigMF)"]
+        DASH --> BIT --> REP
     end
 
-    subgraph S6["6. FRAME DISCOVERY & INTERACTIVE INSTRUMENTS"]
-        FEC_DEC --> CORR["Bitstream Cross-Correlator\n- Barker-7/11/13, CCSDS 32-bit ASM, AX.25\n- FFT Frame Periodicity Detector"]
-        CORR --> UI["4-Instrument PyQtGraph Workspace\n- Synchronized 2D Waterfall + Region Selector\n- Waveform, Welch PSD in dBFS, Constellation\n- Bitstream Inspector (Hex/Binary/ASCII)\n- Click-to-Waveform Microsecond Navigation"]
-    end
+    COND --> DSP & AMC
+    DSP & AMC --> FUS
+    DEM --> INT
+    FEC --> DASH
 ```
+
+### Ready-to-Paste PPT Card Breakdown (For PowerPoint / Canva Shapes)
+*(Exact short text strings to paste directly into slide shapes without text overflow)*
+
+| Shape / Box on Slide | Header Title | Bullet Chips (1–3 words each) | Visual Accent |
+|:---|:---|:---|:---|
+| **Box 1 (Top Left)** | **RF Ingestion Gateway** | • `.IQ`, `.WAV`, `SigMF`<br>• Zero-copy `memmap`<br>• Live PSD calibration | Blue outline card |
+| **Box 2A (Upper Mid)**| **DSP Physics Engine** | • Sub-bin Carrier Offset<br>• 99% Occupied BW<br>• Baud Cyclostationary<br>• Energy Burst VAD | Slate card with math icon |
+| **Box 2B (Lower Mid)**| **Neural AMC Engine** | • ResNet-1D (16 Classes)<br>• Cumulants ($C_{40}, C_{42}$)<br>• Envelope Variance<br>• $<2$ ms CPU Inference | Indigo card with neural icon |
+| **Box 3 (Center)** | **Decision Fusion & Sync**| • Calibrated Evidence ($0-1$)<br>• 2nd-order Costas Loop<br>• Mueller-Müller Timing<br>• Demod (PSK/QAM/FSK) | Teal card |
+| **Box 4 (Mid Right)** | **Protocol Recovery** | • Blind $GF(2)$ Interleaver<br>• Viterbi ($K=7$, Rate 1/2)<br>• Reed-Solomon $GF(2^8)$<br>• LDPC Min-Sum Iterative | Purple card |
+| **Box 5 (Far Right)** | **Operator Instruments**| • 60 FPS 4-Plot Workspace<br>• Bitstream Hex/ASCII<br>• Click-to-Waveform Nav<br>• PDF/SigMF Audit Export | Gold card (Target output) |
+| **Bottom Loop Tag** | **End-to-End Latency** | **⚡ Sub-50ms Dynamic Pipeline Loop (72/72 Tests Verified)** | Green pill badge spanning bottom |
 
 ---
 

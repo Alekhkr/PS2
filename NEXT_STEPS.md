@@ -82,14 +82,36 @@ Fulfill 100% of requirements from `docs/problem_statement_requirements_bullets.t
 
 ---
 
-## Next Steps for Continuous Enhancement
-1. **Live SDR Hardware Streaming (Phase 12)**:
-   - Connect RTL-SDR (`pyrtlsdr`) or HackRF via WebSockets for real-time live antenna signal ingestion at up to 2.4 MSps.
-2. **Deep Learning Model Expansion (Phase 13)**:
+### [COMPLETED] Phase 12: Autonomous 1-Click Auto-Solve Pipeline, Payload Demuxing & Live SDR Streaming Engine
+- [x] 12.1 **1-Click Auto-Solve Pipeline (`AutoSolveModal.tsx` & `/api/pipeline/auto-solve`)**:
+  - Implemented multi-stage autonomous pipeline runner chaining blind parameter extraction -> carrier phase lock & demodulation -> GF(2) de-interleaving -> FEC decoding -> sync word correlation in ~2.8s.
+  - Added prominent `⚡ AUTO-SOLVE` button in `Navigation.tsx` and `⚡ 1-CLICK AUTO-SOLVE PIPELINE` in `HeroSection.tsx`.
+  - Added visual stage-by-stage stepper with progress status and jump-to-outcome navigation.
+- [x] 12.2 **Publication-Grade Technical Audit Report Exporter (`/api/report/export`)**:
+  - Automatically compiles session metrics into formatted GitHub-flavored Markdown and JSON reports.
+  - Supports 1-click clipboard copy and `.md` file download.
+- [x] 12.3 **Automated Aerospace & Telecom Protocol Demuxing (`demux_payload`)**:
+  - Integrated into `Outcome5Correlation.tsx` with protocol selector: `Auto-Detect`, `AX.25 Packet Radio / APRS`, `CCSDS Space Packet (Blue Book)`, and `Raw Binary Stream`.
+  - Parses AX.25 Destination & Source callsigns, control and PID fields, and APRS text.
+  - Parses CCSDS APID with automatic mission subsystem translation, Packet Type, sequence counter, and user data hex bytes.
+  - Computes Shannon entropy ($H$ bits/B) and bit balance ratio.
+- [x] 12.4 **Live SDR Hardware Streaming & Channel Synthesizer (`signal_lab/streaming/sdr_ws.py` & `SdrStreamBanner.tsx`)**:
+  - Bidirectional WebSocket streaming engine at `/ws/sdr` transmitting 30 Hz complex IQ frames and 128-bin FFT spectrum.
+  - Supports `synthetic` (QPSK, 16QAM, FSK, radar chirp), `replay` (continuous circular buffer of loaded captures), and `hardware` (RTL-SDR dongle).
+  - Integrated live spectrum analyzer widget and RMS/PAPR meters into `Outcome1Parameters.tsx`.
+- [x] 12.5 **Full Verification**:
+  - **85/85 pytest tests passing** in 26s across the entire project suite.
+  - **Clean `pnpm build`** in 1.15s with 0 errors.
+
+---
+
+## Future Roadmap Horizons
+1. **Deep Learning Model Expansion (Phase 13)**:
    - Add Transformer-based AMC (SignalBERT / RadioTransformer) to benchmark against the current 1D-ResNet model on the RML2016.10a dataset.
-3. **Automated Demux & Protocol Parser (Phase 14)**:
-   - Parse standard payload protocols (IP over AX.25, CCSDS Space Packet Protocol, AIS Marine transponder messages).
-4. **Client-Side WebAssembly (Wasm) Kernel Fallback (Phase 15)**:
+2. **Client-Side WebAssembly (Wasm) Kernel Fallback (Phase 14)**:
    - Compile Viterbi and GF(2) rank discovery to WebAssembly for zero-latency offline browser execution.
+3. **Multi-Channel Coherent Beamforming & Direction of Arrival (DoA) (Phase 15)**:
+   - MUSIC / ESPRIT algorithms for multi-antenna phased array spatial angle estimation.
+
 
 

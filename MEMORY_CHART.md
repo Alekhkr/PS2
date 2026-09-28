@@ -65,14 +65,17 @@
   - `components/outcomes/Outcome2Demodulation.tsx`: Dedicated Outcome II workspace for FSK, PSK, QAM demodulation with Costas loop phase lock, Mueller-Müller timing recovery, EVM %, and color-coded bit slicer.
   - `components/outcomes/Outcome3Deinterleaving.tsx`: Dedicated Outcome III workspace for Block, Convolutional, Diagonal, and Pseudo-Random de-interleavers with automated blind $GF(2)$ matrix rank-deficiency estimation ($M \in [4, 32]$).
   - `components/outcomes/Outcome4Fec.tsx`: Dedicated Outcome IV workspace for Viterbi ($K=7$), Reed-Solomon $RS(255, 223)$, Concatenated, and LDPC Min-Sum decoders with syndrome validation and BER analysis.
-  - `components/outcomes/Outcome5Correlation.tsx`: Dedicated Outcome V workspace for Barker-7/11/13, CCSDS ASM, and AX.25 cross-correlation with automated header/payload segregation and 3-column synchronized hex/bit/ASCII inspector.
-  - `components/ui/Navigation.tsx`: Top navigation bar with 5-outcome tabs, capture ingestion (.IQ/.WAV upload & presets), audio drone toggle, 3D ribbon toggle, and backend status.
+  - `components/outcomes/Outcome5Correlation.tsx`: Dedicated Outcome V workspace for Barker-7/11/13, CCSDS ASM, and AX.25 cross-correlation with automated header/payload segregation, synchronized 3-column hex/bit/ASCII inspector, and rich telemetry demuxing (APRS callsigns, CCSDS APID translation, Shannon entropy, bit balance).
+  - `components/ui/AutoSolveModal.tsx`: 1-Click Autonomous End-to-End Pipeline runner (`⚡ AUTO-SOLVE`) with real-time multi-stage visual execution stepper and publication-grade Markdown audit report exporter.
+  - `components/streaming/SdrStreamBanner.tsx`: Live bidirectional WebSocket SDR interface featuring 30 Hz streaming, real-time 128-bin FFT spectrum display, RMS/PAPR gauges, and synthetic/replay/hardware mode switching.
+  - `components/ui/Navigation.tsx`: Top navigation bar with 5-outcome tabs, capture ingestion (.IQ/.WAV upload & presets), `⚡ AUTO-SOLVE` button, audio drone toggle, 3D ribbon toggle, and backend status.
   - `components/ui/OverlayDossier.tsx`: Mathematical formulation and RF architecture dossier modal (key `D`).
+- `signal_lab/streaming/sdr_ws.py`: High-performance FastAPI WebSocket streamer supporting real-time complex IQ synthesis (QPSK, 16QAM, FSK, radar chirp), circular capture replay, and hardware RTL-SDR integration.
 
 ---
 
 ## 4. Current Test Suite Status
-- **82 unit & integration tests passing** in `tests/` in 8.53 seconds:
+- **85 unit & integration tests passing** in `tests/`:
   - `tests/test_assumptions_dialog.py` (3 tests)
   - `tests/test_austensor_gui.py` (5 tests)
   - `tests/test_bitstream_viewer.py` (3 tests)
@@ -93,11 +96,11 @@
   - `tests/test_plots.py` (5 tests)
   - `tests/test_real_signals.py` (3 tests)
   - `tests/test_report_service.py` (1 test)
-  - `tests/test_server_api.py` (3 tests)
+  - `tests/test_server_api.py` (6 tests: experiments, LOD waveform, fallback health, payload demux, auto-solve pipeline, SDR WebSocket streaming)
   - `tests/test_sigmf.py` (4 tests)
   - `tests/test_storage.py` (2 tests)
   - `tests/test_streaming.py` (2 tests)
-- **Frontend TypeScript / Vite build**: Clean build with zero errors in 1.05s.
+- **Frontend TypeScript / Vite build**: Clean build with zero errors in 1.15s.
 - **Ruff linter compliance**: 100% clean, 0 warnings.
 - **Headless Qt testing**: Pre-configured with `QT_QPA_PLATFORM=offscreen`.
 

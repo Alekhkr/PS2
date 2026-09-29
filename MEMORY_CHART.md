@@ -5,6 +5,7 @@
 - **Target Bands**: HF (3-30 MHz), VHF (30-300 MHz), UHF (300-3000 MHz)
 - **Objective**: Transform raw `.IQ`, `.WAV`, and `SigMF` recordings into auditable, reproducible, confidence-ranked analysis sessions.
 - **Key Differentiator**: Not a black-box. Combines DSP parameter estimation, neural modulation classification, candidate demodulation, FEC/interleaver hypothesis exploration, and bitstream correlation with explicit mathematical assumptions, algorithm provenance, and calibrated confidence scores ($0.0 - 1.0$).
+- **Architecture**: Native PySide6 + PyQtGraph scientific desktop instrument backed by high-performance C++ SIMD kernels (`pybind11`). Zero web-server bloatware.
 
 ---
 
@@ -25,12 +26,13 @@
 ## 3. Operational Codebase Inventory
 
 ### Core Modules (`signal_lab/`)
-- `domain/models.py`: `SignalBuffer`, `SignalSegment`, `ParameterEvidence`, `DemodulationResult`, `DecodingResult`, `PipelineNode`, `Session`.
+- `domain/models/`: `SignalBuffer`, `SignalSegment`, `ParameterEvidence`, `ModulationCandidate`, `Session`, `InterleaverCandidate`.
 - `ingestion/wav_parser.py`: Multi-channel WAV parser, mono Hilbert analytic conversion, stereo I/Q split.
-- `ingestion/raw_iq_parser.py`: `cf32`, `ci16`, `ci8`, `ci32` binary reader with endianness selection.
+- `ingestion/iq_parser.py`: `cf32`, `cf64`, `ci16`, `ci8`, `ci32` binary reader with byte order and scaling configuration.
 - `ingestion/sigmf_parser.py`: Native SigMF `.sigmf-meta` and `.sigmf-data` reader & writer.
 - `ingestion/streaming.py`: `StreamingSignalBuffer` backed by `np.memmap` for multi-GB capture streaming ($< 100\text{ MB}$ RAM).
 - `dsp/conditioning.py`: DC offset removal, Gram-Schmidt IQ imbalance correction, frequency shifting, normalization, polyphase resampling.
+- `dsp/fast_kernels.cpp` & `_fast_kernels.so`: C++17 SIMD accelerated kernels (min-max decimation, FFT, carrier peak search, Costas loop, Mueller-Müller timing recovery).
 - `estimation/carrier.py`: Quadratic peak interpolation sub-bin carrier frequency estimator.
 - `estimation/bandwidth.py`: 99% Occupied Bandwidth (OBW) power-integral estimator.
 - `estimation/snr.py`: Spectral differential SNR estimator.
@@ -44,37 +46,36 @@
 - `synchronization/carrier_recovery.py`: 2nd-order Costas loop ($f_e, \theta_e$ tracking).
 - `synchronization/timing_recovery.py`: Mueller-Müller timing error detector with fractional interpolation.
 - `demodulation/base.py`, `psk.py`, `qam.py`, `fsk.py`: PSK (BPSK, QPSK, 8PSK), QAM (16, 64), FSK demodulators with EVM, constellation, hard bits, soft LLRs.
-- `fec/viterbi.py`: Rate 1/2, $K=7$ soft/hard Viterbi decoder with syndrome scoring.
+- `fec/viterbi.py`: Rate 1/2, $K=7$ soft/hard Viterbi decoder with convolutional encoder and syndrome scoring.
 - `fec/reed_solomon.py`: Galois Field $GF(2^8)$ Reed-Solomon evaluator.
 - `fec/ldpc.py`: Iterative Min-Sum message-passing LDPC decoder with IEEE 802.11n rate 1/2 parity matrix generator.
 - `fec/concatenated.py`: Joint Inner Viterbi + Deinterleaver + Outer Reed-Solomon concatenated decoding engine.
-- `interleaving/interleaver.py`: $R \times C$ block deinterleaver hypothesis exploration.
+- `interleaving/interleaver.py`: $R \times C$ block interleaver and deinterleaver.
 - `interleaving/blind_search.py`: $GF(2)$ Gaussian elimination rank-deficiency & auto-correlation blind interleaver width search.
 - `correlation/correlator.py`: Barker-7/11/13 and CCSDS sync word cross-correlator and frame periodicity detector.
 - `storage/database.py`: SQLite session database with WAL mode and foreign key cascading.
 - `services/orchestrator.py`: Multi-threaded `QThread` async pipeline runner.
 - `services/evidence_engine.py`: Multi-source confidence fusion ($0.0 - 1.0$).
 - `services/report_service.py`: JSON, CSV, and Markdown audit report generator.
-- `server.py`: High-performance asynchronous FastAPI server providing multi-resolution LOD min-max decimation, I/Q constellation decimation, 2D STFT spectrogram waterfall, hybrid AMC neural extraction, multi-scheme demodulation, GF(2) rank discovery, FEC decoding (Viterbi/RS/Concatenated/LDPC), and bitstream sync correlation. Auto-fallback ensures zero 404s.
-- `frontend/`: Full-stack React 19 + TypeScript + Vite + Three.js + Tailwind v4 RF intelligence workbench:
-  - `components/SmoothWaveform.tsx`: Real-time 60 FPS digital storage oscilloscope with dynamic auto-gain normalization, continuous animated live sweep mode (`▶ LIVE SWEEP`), phosphor CRT glow, dual-trace I/Q, timebase zoom presets, and minimap timeline.
-  - `components/SpectrogramView.tsx`: Real-time 2D STFT spectrogram waterfall mapped through an authentic Viridis colormap (-80 dB to 0 dB).
-  - `components/ConstellationView.tsx`: RMS-normalized I/Q scatter with unit circle, $C_{40}, C_{42}$ cumulants, and EVM % gauge.
-  - `components/outcomes/Outcome1Parameters.tsx`: Dedicated Outcome I workspace for blind parameter extraction ($f_s$, 99% OBW, CFO, SNR, Baud rate, and 1D-ResNet AMC classification).
-  - `components/outcomes/Outcome2Demodulation.tsx`: Dedicated Outcome II workspace for FSK, PSK, QAM demodulation with Costas loop phase lock, Mueller-Müller timing recovery, EVM %, and color-coded bit slicer.
-  - `components/outcomes/Outcome3Deinterleaving.tsx`: Dedicated Outcome III workspace for Block, Convolutional, Diagonal, and Pseudo-Random de-interleavers with automated blind $GF(2)$ matrix rank-deficiency estimation ($M \in [4, 32]$).
-  - `components/outcomes/Outcome4Fec.tsx`: Dedicated Outcome IV workspace for Viterbi ($K=7$), Reed-Solomon $RS(255, 223)$, Concatenated, and LDPC Min-Sum decoders with syndrome validation and BER analysis.
-  - `components/outcomes/Outcome5Correlation.tsx`: Dedicated Outcome V workspace for Barker-7/11/13, CCSDS ASM, and AX.25 cross-correlation with automated header/payload segregation, synchronized 3-column hex/bit/ASCII inspector, and rich telemetry demuxing (APRS callsigns, CCSDS APID translation, Shannon entropy, bit balance).
-  - `components/ui/AutoSolveModal.tsx`: 1-Click Autonomous End-to-End Pipeline runner (`⚡ AUTO-SOLVE`) with real-time multi-stage visual execution stepper and publication-grade Markdown audit report exporter.
-  - `components/streaming/SdrStreamBanner.tsx`: Live bidirectional WebSocket SDR interface featuring 30 Hz streaming, real-time 128-bin FFT spectrum display, RMS/PAPR gauges, and synthetic/replay/hardware mode switching.
-  - `components/ui/Navigation.tsx`: Top navigation bar with 5-outcome tabs, capture ingestion (.IQ/.WAV upload & presets), `⚡ AUTO-SOLVE` button, audio drone toggle, and backend status.
-  - `components/ui/OverlayDossier.tsx`: Mathematical formulation and RF architecture dossier modal (key `D`).
-- `signal_lab/streaming/sdr_ws.py`: High-performance FastAPI WebSocket streamer supporting real-time complex IQ synthesis (QPSK, 16QAM, FSK, radar chirp), circular capture replay, and hardware RTL-SDR integration.
+- `gui/`: Pure PySide6 + PyQtGraph native scientific desktop instrument:
+  - `main_window.py`: Master window with 7 primary navigation tabs: `OVERVIEW`, `ANALYSIS`, `SIGNAL`, `DEMOD`, `BITS`, `EVIDENCE`, `REPORT`.
+  - `widgets/header_bar.py`: Brand, Session ID (`SL-XXXX`), File, Format, Duration, Sample Rate, Center Frequency, Status, and `⚡ AUTO ANALYZE`.
+  - `widgets/navigation_bar.py`: High-contrast 7-tab scientific switcher.
+  - `widgets/analysis_workspace.py`: Main synchronized analysis screen: Waterfall (top), Spectrum (middle), and synchronized row: Waveform (time), Constellation, and Signal Profile.
+  - `widgets/signal_profile.py`: Real-time telemetry card (Modulation, Symbol Rate, Bandwidth, SNR, Carrier, Confidence, Sync lock, and Evidence summary).
+  - `widgets/signal_view.py`: Dedicated conditioning controls (DC block, IQ balance, normalization) and detected burst energy table.
+  - `widgets/demod_view.py`: Dedicated constellation decision regions, EVM gauge, Costas phase error, and Mueller-Müller timing error curves.
+  - `widgets/bitstream_viewer.py`: Synchronized 3-column Binary / Hex / ASCII inspector with sync word highlighting and click-to-time navigation.
+  - `widgets/evidence_view.py`: Full-width Parameter Evidence and Provenance table with search filtering.
+  - `widgets/report_view.py`: Full-page technical audit report preview with 1-click Markdown / JSON export and clipboard copy.
+  - `widgets/pipeline_status.py`: Interactive bottom breadcrumbs: `Detect` | `Estimate` | `Classify` | `Synchronize` | `Demodulate` | `Interleave` | `FEC` | `Correlate`.
+  - `widgets/assumptions_dialog.py`: Interactive format/endianness/rate assumption dialog with live mini-FFT preview.
 
 ---
 
 ## 4. Current Test Suite Status
-- **85 unit & integration tests passing** in `tests/`:
+- **80 unit, integration, and golden tests passing (100% pass rate)** in `tests/`:
+  - `tests/test_golden_e2e.py` (Canonical closed-loop test: Payload -> Conv Encode -> Interleave -> QPSK -> Impairment -> Ingest -> Condition -> Estimate -> Costas -> Slice -> Deinterleave -> Viterbi -> Correlate -> 100% Payload Match)
   - `tests/test_assumptions_dialog.py` (3 tests)
   - `tests/test_austensor_gui.py` (5 tests)
   - `tests/test_bitstream_viewer.py` (3 tests)
@@ -95,12 +96,11 @@
   - `tests/test_plots.py` (5 tests)
   - `tests/test_real_signals.py` (3 tests)
   - `tests/test_report_service.py` (1 test)
-  - `tests/test_server_api.py` (6 tests: experiments, LOD waveform, fallback health, payload demux, auto-solve pipeline, SDR WebSocket streaming)
   - `tests/test_sigmf.py` (4 tests)
   - `tests/test_storage.py` (2 tests)
   - `tests/test_streaming.py` (2 tests)
-- **Frontend TypeScript / Vite build**: Clean build with zero errors in 1.15s.
 - **Ruff linter compliance**: 100% clean, 0 warnings.
+- **C++ SIMD Kernels**: 100% built and validated inplace via PyBind11.
 - **Headless Qt testing**: Pre-configured with `QT_QPA_PLATFORM=offscreen`.
 
 ---

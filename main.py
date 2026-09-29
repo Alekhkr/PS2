@@ -1,12 +1,12 @@
-"""Signal Lab Main Runner.
+"""Signal Lab — Automated IQ/WAV Signal Analysis Platform.
 
-Allows running directly via:
+Main CLI launcher:
     python main.py
-    uvicorn main:app --reload
 """
 
-import uvicorn
-from signal_lab.server import app
+import sys
+
+from signal_lab.app import main
 
 if __name__ == "__main__":
-    uvicorn.run("signal_lab.server:app", host="127.0.0.1", port=8000, reload=True)
+    sys.exit(main())

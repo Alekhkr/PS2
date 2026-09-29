@@ -24,6 +24,10 @@ def estimate_symbol_rate(
     envelope = np.abs(buffer.samples) ** 2
     envelope = envelope - np.mean(envelope)  # Remove DC
 
+    # Guard against NaN/Inf from overflow (e.g. int16 raw data)
+    if not np.isfinite(envelope).any():
+        return []
+
     # 2. Compute PSD of the squared envelope
     nperseg = min(4096, len(envelope))
     freqs, psd = signal.welch(
@@ -68,6 +72,10 @@ def estimate_symbol_rate(
         snr_metric = peak_pwr / (median_pwr + 1e-15)
         raw_conf = float(np.clip(snr_metric / 15.0, 0.2, 0.95))
         discounted_conf = raw_conf * (0.9**rank)
+
+        # Guard: NaN confidence (from overflow data) → skip candidate
+        if not np.isfinite(discounted_conf):
+            continue
 
         evidence = ParameterEvidence(
             name=f"symbol_rate_candidate_{rank + 1}",

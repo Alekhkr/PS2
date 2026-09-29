@@ -15,6 +15,22 @@ class ViterbiResult:
     converged: bool
 
 
+def encode_convolutional(
+    bits: np.ndarray, k: int = 7, polys: tuple[int, int] = (0o171, 0o133)
+) -> np.ndarray:
+    """Encodes bits using standard rate 1/2 convolutional encoder."""
+    state = 0
+    coded = np.zeros(len(bits) * 2, dtype=np.uint8)
+    for i, bit in enumerate(bits):
+        reg = (int(bit) << (k - 1)) | state
+        p0 = (reg & polys[0]).bit_count() % 2
+        p1 = (reg & polys[1]).bit_count() % 2
+        coded[2 * i] = p0
+        coded[2 * i + 1] = p1
+        state = reg >> 1
+    return coded
+
+
 class ViterbiDecoder:
     """Standard Rate 1/2, Constraint Length K=7 Convolutional Decoder.
 

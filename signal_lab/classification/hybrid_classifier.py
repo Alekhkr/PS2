@@ -5,7 +5,10 @@ Produces explainable, confidence-ranked modulation hypotheses with full provenan
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 import numpy as np
 import torch
@@ -42,26 +45,37 @@ class HybridModulationClassifier:
     ) -> None:
         self.device = torch.device(device_str)
         self.classes = MODULATION_CLASSES_R16
-        self._model: ModulationResNet1D | None = None
+        self._onnx_model = None
+        self._model = None
 
-        # Resolve weights path
-        p = (
-            Path(weights_path)
-            if weights_path
-            else Path(__file__).parent.parent / "ml" / "weights" / "modulation_r16_resnet.pt"
-        )
-        if p.exists():
+        # Try ONNX first for lowest latency
+        onnx_p = Path(__file__).parent.parent / "ml" / "weights" / "signalbert_opt.onnx"
+        if onnx_p.exists():
             try:
-                self._model = ModulationResNet1D(num_classes=len(self.classes)).to(self.device)
-                state = torch.load(p, map_location=self.device, weights_only=True)
-                self._model.load_state_dict(state)
-                self._model.eval()
-            except (RuntimeError, ValueError, OSError):
-                self._model = None
+                from signal_lab.ml.onnx_runtime import ONNXModulationClassifier
+                self._onnx_model = ONNXModulationClassifier(onnx_p)
+            except (ImportError, RuntimeError, OSError, ValueError) as err:
+                logger.debug("Failed to load ONNX classifier: %s", err)
+
+        if not self._onnx_model:
+            # Fallback to PyTorch ResNet
+            p = (
+                Path(weights_path)
+                if weights_path
+                else Path(__file__).parent.parent / "ml" / "weights" / "modulation_r16_resnet.pt"
+            )
+            if p.exists():
+                try:
+                    self._model = ModulationResNet1D(num_classes=len(self.classes)).to(self.device)
+                    state = torch.load(p, map_location=self.device, weights_only=True)
+                    self._model.load_state_dict(state)
+                    self._model.eval()
+                except (RuntimeError, ValueError, OSError):
+                    self._model = None
 
     @property
     def has_neural_model(self) -> bool:
-        return self._model is not None
+        return self._onnx_model is not None or self._model is not None
 
     def classify(
         self,
@@ -99,26 +113,29 @@ class HybridModulationClassifier:
         else:
             dsp_evidence.append("Multi-amplitude envelope (consistent with QAM/APSK)")
 
-        # 2. Deep Learning 1D-CNN Inference
+        # 2. Deep Learning Inference
         neural_probs: np.ndarray | None = None
-        if self._model is not None and len(samples) >= 512:
-            # Segment into non-overlapping 512-sample windows
+        if self.has_neural_model and len(samples) >= 512:
             num_windows = min(max_windows, len(samples) // 512)
             windows_raw = samples[: num_windows * 512].reshape(num_windows, 512)
 
-            # Normalization per window
             mags = np.sqrt(np.mean(np.abs(windows_raw) ** 2, axis=1, keepdims=True)) + 1e-12
             windows_norm = windows_raw / mags
 
-            # Reshape to (B, 2, 512): channel 0 = I, channel 1 = Q
-            x_tensor = np.empty((num_windows, 2, 512), dtype=np.float32)
-            x_tensor[:, 0, :] = np.real(windows_norm)
-            x_tensor[:, 1, :] = np.imag(windows_norm)
+            if self._onnx_model:
+                # Use ONNX Runtime for SignalBERT
+                probs = self._onnx_model.predict_probabilities(windows_norm)
+                neural_probs = np.mean(probs, axis=0)
+            else:
+                # Use PyTorch ResNet
+                x_tensor = np.empty((num_windows, 2, 512), dtype=np.float32)
+                x_tensor[:, 0, :] = np.real(windows_norm)
+                x_tensor[:, 1, :] = np.imag(windows_norm)
 
-            with torch.no_grad():
-                tensor_input = torch.from_numpy(x_tensor).to(self.device)
-                probs = self._model.predict_probabilities(tensor_input).cpu().numpy()
-                neural_probs = np.mean(probs, axis=0)  # Average across windows
+                with torch.no_grad():
+                    tensor_input = torch.from_numpy(x_tensor).to(self.device)
+                    probs = self._model.predict_probabilities(tensor_input).cpu().numpy()
+                    neural_probs = np.mean(probs, axis=0)
 
         # 3. Decision Fusion
         candidates: list[ModulationCandidate] = []

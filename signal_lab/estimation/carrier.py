@@ -26,43 +26,52 @@ def estimate_carrier_frequency(buffer: SignalBuffer, nperseg: int = 4096) -> Par
     fs = buffer.sample_rate_hz or 1.0
     nperseg = min(nperseg, buffer.num_samples)
 
-    freqs, psd = signal.welch(
-        buffer.samples,
-        fs=fs,
-        window="hann",
-        nperseg=nperseg,
-        return_onesided=False,
-        scaling="density",
-    )
+    try:
+        from signal_lab.dsp._fast_kernels import estimate_carrier_peak
+        # The C++ kernel computes Welch PSD internally, finds peak, and interpolates
+        peak_idx, sub_bin_offset, nfft, pmr = estimate_carrier_peak(buffer.samples, nperseg)
+        bin_spacing = fs / float(nfft)
+        
+        # fftshift maps peak_idx. If peak_idx < nfft/2, freq is positive, else negative
+        # But the C++ kernel already did fftshift into a linear array [0..nfft-1] corresponding to [-fs/2, fs/2)
+        freq_idx_shifted = peak_idx - (nfft / 2)
+        carrier_offset_hz = (freq_idx_shifted + sub_bin_offset) * bin_spacing
+        absolute_carrier_hz = (
+            (buffer.center_frequency_hz + carrier_offset_hz)
+            if buffer.center_frequency_hz is not None
+            else carrier_offset_hz
+        )
+        confidence = float(np.clip(1.0 - np.exp(-pmr / 20.0), 0.1, 0.99))
+    except ImportError:
+        freqs, psd = signal.welch(
+            buffer.samples,
+            fs=fs,
+            window="hann",
+            nperseg=nperseg,
+            return_onesided=False,
+            scaling="density",
+        )
 
-    freqs = np.fft.fftshift(freqs)
-    psd = np.fft.fftshift(psd)
+        freqs = np.fft.fftshift(freqs)
+        psd = np.fft.fftshift(psd)
 
-    peak_idx = int(np.argmax(psd))
+        peak_idx = int(np.argmax(psd))
 
-    # Quadratic interpolation around peak for sub-bin resolution
-    if 0 < peak_idx < len(psd) - 1:
-        alpha = float(psd[peak_idx - 1])
-        beta = float(psd[peak_idx])
-        gamma = float(psd[peak_idx + 1])
-        delta = 0.5 * (alpha - gamma) / (alpha - 2 * beta + gamma + 1e-15)
-        bin_spacing = fs / nperseg
-        sub_bin_offset = delta * bin_spacing
-    else:
-        sub_bin_offset = 0.0
+        if 0 < peak_idx < len(psd) - 1:
+            alpha = float(psd[peak_idx - 1])
+            beta = float(psd[peak_idx])
+            gamma = float(psd[peak_idx + 1])
+            delta = 0.5 * (alpha - gamma) / (alpha - 2 * beta + gamma + 1e-15)
+            bin_spacing = fs / nperseg
+            sub_bin_offset = delta * bin_spacing
+        else:
+            sub_bin_offset = 0.0
 
-    carrier_offset_hz = float(freqs[peak_idx]) + sub_bin_offset
-    absolute_carrier_hz = (
-        (buffer.center_frequency_hz + carrier_offset_hz)
-        if buffer.center_frequency_hz is not None
-        else carrier_offset_hz
-    )
-
-    # Confidence estimation from peak-to-median ratio (PMR)
-    median_psd = float(np.median(psd))
-    peak_psd = float(psd[peak_idx])
-    pmr = peak_psd / (median_psd + 1e-18)
-    confidence = float(np.clip(1.0 - np.exp(-pmr / 20.0), 0.1, 0.99))
+        carrier_offset_hz = float(freqs[peak_idx]) + sub_bin_offset
+        median_psd = float(np.median(psd))
+        peak_psd = float(psd[peak_idx])
+        pmr = peak_psd / (median_psd + 1e-18)
+        confidence = float(np.clip(1.0 - np.exp(-pmr / 20.0), 0.1, 0.99))
 
     return ParameterEvidence(
         name="carrier_frequency",

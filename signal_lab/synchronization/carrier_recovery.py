@@ -15,6 +15,8 @@ class CostasLoop:
         loop_bw: float = 0.05,
     ) -> None:
         self.order = order
+        self.damping = damping
+        self.loop_bw = loop_bw
         # Loop filter gains
         denom = 1.0 + 2.0 * damping * loop_bw + loop_bw**2
         self.alpha = (4.0 * damping * loop_bw) / denom
@@ -27,50 +29,52 @@ class CostasLoop:
             synchronized_samples: Phase-corrected samples
             metrics: Convergence metrics including residual phase error and estimated frequency offset
         """
-        n = len(samples)
-        out = np.zeros(n, dtype=np.complex64)
+        try:
+            from signal_lab.dsp._fast_kernels import costas_loop_process
+            out, metrics = costas_loop_process(
+                samples.astype(np.complex64),
+                self.order,
+                self.damping,
+                self.loop_bw
+            )
+            return out, metrics
+        except ImportError:
+            n = len(samples)
+            out = np.zeros(n, dtype=np.complex64)
 
-        phase = 0.0
-        freq = 0.0
-        phase_errors = np.zeros(n, dtype=np.float32)
+            phase = 0.0
+            freq = 0.0
+            phase_errors = np.zeros(n, dtype=np.float32)
 
-        for i in range(n):
-            # De-rotate sample by current phase estimate
-            s = samples[i] * np.exp(-1j * phase)
-            out[i] = s
+            for i in range(n):
+                s = samples[i] * np.exp(-1j * phase)
+                out[i] = s
 
-            # Phase detector error based on modulation order
-            if self.order == 2:  # BPSK
-                error = float(np.real(s) * np.imag(s))
-            elif self.order == 4:  # QPSK / QAM
-                # sign(real)*imag - sign(imag)*real
-                error = float(np.sign(np.real(s)) * np.imag(s) - np.sign(np.imag(s)) * np.real(s))
-            elif self.order == 8:  # 8PSK
-                # Phase error relative to nearest 45 deg ray
-                angle = np.angle(s)
-                nearest_ray = np.round(angle / (np.pi / 4.0)) * (np.pi / 4.0)
-                error = float(np.sin(angle - nearest_ray))
-            else:
-                error = float(np.imag(s))
+                if self.order == 2:
+                    error = float(np.real(s) * np.imag(s))
+                elif self.order == 4:
+                    error = float(np.sign(np.real(s)) * np.imag(s) - np.sign(np.imag(s)) * np.real(s))
+                elif self.order == 8:
+                    angle = np.angle(s)
+                    nearest_ray = np.round(angle / (np.pi / 4.0)) * (np.pi / 4.0)
+                    error = float(np.sin(angle - nearest_ray))
+                else:
+                    error = float(np.imag(s))
 
-            phase_errors[i] = error
+                phase_errors[i] = error
 
-            # 2nd-order loop filter update
-            freq += self.beta * error
-            phase += freq + self.alpha * error
+                freq += self.beta * error
+                phase += freq + self.alpha * error
+                phase = (phase + np.pi) % (2 * np.pi) - np.pi
 
-            # Wrap phase to [-pi, pi]
-            phase = (phase + np.pi) % (2 * np.pi) - np.pi
+            steady_errors = phase_errors[n // 2 :] if n >= 20 else phase_errors
+            rms_phase_error = float(np.sqrt(np.mean(steady_errors**2)))
+            converged = rms_phase_error < 0.35
 
-        # Metrics
-        steady_errors = phase_errors[n // 2 :] if n >= 20 else phase_errors
-        rms_phase_error = float(np.sqrt(np.mean(steady_errors**2)))
-        converged = rms_phase_error < 0.35
+            metrics = {
+                "converged": converged,
+                "rms_phase_error_rad": rms_phase_error,
+                "residual_frequency_offset": float(freq),
+            }
 
-        metrics = {
-            "converged": converged,
-            "rms_phase_error_rad": rms_phase_error,
-            "residual_frequency_offset": float(freq),
-        }
-
-        return out, metrics
+            return out, metrics

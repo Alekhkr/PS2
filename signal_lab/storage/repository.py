@@ -146,6 +146,11 @@ class SessionRepository:
             confidence=excluded.confidence,
             validation=excluded.validation;
         """
+        import math
+        # Coerce NaN / None confidence to 0.0 — NOT NULL constraint guard
+        raw_conf = evidence.confidence
+        safe_conf = 0.0 if (raw_conf is None or (isinstance(raw_conf, float) and math.isnan(raw_conf))) else float(raw_conf)
+
         with self.db_manager.get_connection() as conn:
             conn.execute(
                 query,
@@ -160,7 +165,7 @@ class SessionRepository:
                     if hasattr(evidence.source, "value")
                     else str(evidence.source),
                     evidence.algorithm,
-                    evidence.confidence,
+                    safe_conf,
                     json.dumps(evidence.assumptions),
                     evidence.validation.value
                     if hasattr(evidence.validation, "value")

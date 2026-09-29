@@ -37,3 +37,5 @@ htmlcov/
 *.sqlite3
 workspace/
 data/
+tmp/
+*.log

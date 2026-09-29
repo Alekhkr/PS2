@@ -9,6 +9,22 @@ from signal_lab.domain.models.evidence import InterleaverCandidate
 from signal_lab.fec import evaluate_fec_hypotheses
 
 
+def interleave_block(bits: np.ndarray, rows: int, cols: int) -> np.ndarray:
+    """Applies block interleaver where transmitter writes row-wise and reads col-wise."""
+    block_size = rows * cols
+    n_blocks = len(bits) // block_size
+    if n_blocks == 0:
+        return bits
+
+    out = np.empty_like(bits[: n_blocks * block_size])
+    for b in range(n_blocks):
+        chunk = bits[b * block_size : (b + 1) * block_size]
+        # Write rows x cols, read cols x rows
+        matrix = chunk.reshape((rows, cols)).T
+        out[b * block_size : (b + 1) * block_size] = matrix.flatten()
+    return out
+
+
 def deinterleave_block(bits: np.ndarray, rows: int, cols: int) -> np.ndarray:
     """Reverses block interleaver where transmitter writes row-wise and reads col-wise."""
     block_size = rows * cols
